@@ -1,0 +1,115 @@
+import { useEffect, useState } from "react";
+import { userService } from "../services/userService";
+import { UpdateProfilePayload, User } from "../types/models";
+
+export function useProfile() {
+  const [user, setUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    old_password: "",
+    password_hash: "",
+    confirmPassword: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const data = await userService.getMe();
+        setUser(data);
+        setFormData({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          old_password: "",
+          password_hash: "",
+          confirmPassword: "",
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Impossible de charger le profil",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{16,}$/;
+
+    if (!emailRegex.test(formData.email)) {
+      setError("Format d'email invalide");
+      return;
+    }
+
+    if (formData.password_hash) {
+      if (!formData.old_password) {
+        setError("Veuillez saisir votre ancien mot de passe");
+        return;
+      }
+      if (!passwordRegex.test(formData.password_hash)) {
+        setError(
+          "Le mot de passe doit contenir au moins 16 caractères, une lettre, un chiffre et un caractère spécial",
+        );
+        return;
+      }
+      if (formData.password_hash !== formData.confirmPassword) {
+        setError("Les mots de passe ne correspondent pas");
+        return;
+      }
+    }
+
+    try {
+      const updateData: UpdateProfilePayload & { old_password?: string } = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+      };
+
+      if (formData.password_hash) {
+        updateData.password_hash = formData.password_hash;
+        updateData.old_password = formData.old_password;
+      }
+
+      await userService.updateMe(updateData);
+      setSuccess("Profil mis à jour avec succès");
+      setFormData((prev) => ({
+        ...prev,
+        old_password: "",
+        password_hash: "",
+        confirmPassword: "",
+      }));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Impossible de mettre à jour le profil",
+      );
+    }
+  };
+
+  return {
+    user,
+    formData,
+    setFormData,
+    isLoading,
+    error,
+    setError,
+    success,
+    setSuccess,
+    handleUpdate,
+  };
+}

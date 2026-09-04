@@ -1,0 +1,96 @@
+services:
+  db-defi-vdc:
+    container_name: db-defi-vdc-prod
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Europe/Paris
+    volumes:
+      - db_data_prod:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  backend-defi-vdc:
+    container_name: backend-defi-vdc-prod
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db-defi-vdc-prod
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_NAME: ${MYSQL_DATABASE}
+      JWT_SECRET: ${JWT_SECRET}
+      TZ: Europe/Paris
+      FRONTEND_URL: ${FRONTEND_URL}
+    depends_on:
+      - db-defi-vdc
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - internal
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  frontend-defi-vdc:
+    container_name: frontend-defi-vdc-prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    depends_on:
+      - backend-defi-vdc
+    networks:
+      - internal
+      - proxy-net
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+
+  nginx:
+    container_name: nginx-proxy-prod
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - frontend-defi-vdc
+    networks:
+      - proxy-net
+
+  certbot:
+    container_name: certbot-prod
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12d & wait $${!}; done;'"
+
+volumes:
+  db_data_prod:
+  uploads_data:
+
+networks:
+  internal:
+    internal: true
+  proxy-net:
