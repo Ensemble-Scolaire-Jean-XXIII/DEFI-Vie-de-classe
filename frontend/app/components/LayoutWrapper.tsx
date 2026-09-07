@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { parseJwt } from "../lib/auth";
 import Image from "next/image";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
@@ -49,6 +49,128 @@ function NavLink({
   );
 }
 
+function AdminDropdown({
+  isOpen,
+  onToggle,
+  dropdownRef,
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+  dropdownRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const pathname = usePathname();
+  const { t } = useTheme();
+
+  const adminLinks = [
+    {
+      href: "/classes-trimestres",
+      iconSrc: "/icons/formations.webp",
+      iconAlt: "Classes & Trimestres",
+      label: "Classes & Trimestres",
+    },
+    {
+      href: "/niveaux-items",
+      iconSrc: "/icons/levels.webp",
+      iconAlt: "Niveaux & Items",
+      label: "Niveaux & Items",
+    },
+    {
+      href: "/medailles",
+      iconSrc: "/icons/medal.webp",
+      iconAlt: "Médailles",
+      label: "Médailles",
+    },
+    {
+      href: "/utilisateurs",
+      iconSrc: "/icons/users.webp",
+      iconAlt: "Utilisateurs",
+      label: "Utilisateurs",
+    },
+  ];
+
+  const isAnyActive = adminLinks.some((link) => pathname === link.href);
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+        className={`relative px-4 py-2 rounded-xl transition-all duration-200 flex items-center gap-2 font-medium whitespace-nowrap cursor-pointer ${
+          isAnyActive ? t.activeNav : t.navHover
+        }`}
+      >
+        <span className="w-5 h-5 relative flex items-center justify-center">
+          <Image
+            src="/icons/formations.webp"
+            alt="Administration"
+            width={16}
+            height={16}
+            className={`object-contain brightness-0 invert transition-all ${
+              isAnyActive ? "opacity-100" : "opacity-70"
+            }`}
+            unoptimized
+          />
+        </span>
+        <span className="text-sm">Administration</span>
+        <svg
+          className={`w-3.5 h-3.5 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2.5}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute top-full left-0 mt-2 min-w-55 bg-(--bg-header) backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl py-2 z-50"
+          role="menu"
+        >
+          {adminLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                role="menuitem"
+                onClick={() => onToggle()}
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "bg-white/10 text-white"
+                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <span className="w-5 h-5 relative flex items-center justify-center shrink-0">
+                  <Image
+                    src={link.iconSrc}
+                    alt={link.iconAlt}
+                    width={16}
+                    height={16}
+                    className={`object-contain brightness-0 invert transition-all ${
+                      isActive ? "opacity-100" : "opacity-70"
+                    }`}
+                    unoptimized
+                  />
+                </span>
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -58,8 +180,32 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   const [isPrincipal, setIsPrincipal] = useState(false);
   const [isLoading, setIsLoading] = useState(!isLoginPage);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
 
   const { t } = useTheme();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        adminDropdownRef.current &&
+        !adminDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsAdminDropdownOpen(false);
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setIsAdminDropdownOpen(false);
+    }
+    if (isAdminDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleEscape);
+      };
+    }
+  }, [isAdminDropdownOpen]);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("token");
@@ -120,7 +266,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={t.wrapper}>
-      <header className={t.header}>
+      <header className={`${t.header} relative z-50`}>
         <div className="flex items-center gap-3 shrink-0">
           <div className="h-9 w-auto relative flex items-center shrink-0">
             <Image
@@ -133,16 +279,19 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-black text-lg tracking-wider text-white hidden xl:block">
-              ENSEMBLE SCOLAIRE JEAN XXIII
+            <span className="xl:hidden font-black text-lg tracking-wider text-white">
+              JEAN 23
             </span>
-            <span className="bg-[#e84e1b]/20 text-[#e84e1b] text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-[#e84e1b]/30 uppercase tracking-widest">
+            <span className="hidden xl:inline font-black text-lg tracking-wider text-white">
+              ENSEMBLE SCOLAIRE JEAN 23
+            </span>
+            <span className="hidden min-[555px]:block bg-[#e84e1b]/20 text-[#e84e1b] text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-[#e84e1b]/30 uppercase tracking-widest">
               DÉFI - Vie de classe
             </span>
           </div>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-2">
+        <nav className="hidden desktop:flex items-center gap-2 mx-auto">
           <NavLink
             href="/"
             iconSrc="/icons/leaderboard.webp"
@@ -172,46 +321,18 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
           )}
 
           {isAdmin && (
-            <>
-              <NavLink
-                href="/classes-trimestres"
-                iconSrc="/icons/formations.webp"
-                iconAlt="Classes & Trimestres"
-              >
-                Classes & Trimestres
-              </NavLink>
-              <NavLink
-                href="/niveaux-items"
-                iconSrc="/icons/levels.webp"
-                iconAlt="Niveaux & Items"
-              >
-                Niveaux & Items
-              </NavLink>
-              <NavLink
-                href="/medailles"
-                iconSrc="/icons/medal.webp"
-                iconAlt="Médailles"
-              >
-                Médailles
-              </NavLink>
-            </>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              href="/utilisateurs"
-              iconSrc="/icons/users.webp"
-              iconAlt="Users"
-            >
-              Utilisateurs
-            </NavLink>
+            <AdminDropdown
+              isOpen={isAdminDropdownOpen}
+              onToggle={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+              dropdownRef={adminDropdownRef}
+            />
           )}
         </nav>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 ml-auto">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            className="desktop:hidden p-2 text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
           >
             <svg
               className="w-6 h-6"
@@ -265,7 +386,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
       </header>
 
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-6 gap-6">
+        <div className="desktop:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-6 gap-6">
           <div className="flex justify-end">
             <button
               onClick={() => setIsMobileMenuOpen(false)}
@@ -314,6 +435,9 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             )}
             {isAdmin && (
               <>
+                <span className="text-xs font-bold uppercase tracking-widest text-white/40 mt-2 px-4">
+                  Administration
+                </span>
                 <NavLink
                   href="/classes-trimestres"
                   iconSrc="/icons/formations.webp"
@@ -335,16 +459,14 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 >
                   Médailles
                 </NavLink>
+                <NavLink
+                  href="/utilisateurs"
+                  iconSrc="/icons/users.webp"
+                  iconAlt="Users"
+                >
+                  Utilisateurs
+                </NavLink>
               </>
-            )}
-            {isAdmin && (
-              <NavLink
-                href="/utilisateurs"
-                iconSrc="/icons/users.webp"
-                iconAlt="Users"
-              >
-                Utilisateurs
-              </NavLink>
             )}
           </nav>
         </div>
