@@ -59,33 +59,6 @@ services:
         limits:
           memory: 1536M
 
-  nginx:
-    container_name: nginx-proxy-prod
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.prod
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-    depends_on:
-      - frontend-defi-vdc
-    networks:
-      - proxy-net
-
-  certbot:
-    container_name: certbot-prod
-    image: certbot/certbot
-    restart: unless-stopped
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12d & wait $${!}; done;'"
-
 volumes:
   db_data_prod:
   uploads_data:
@@ -94,3 +67,5 @@ networks:
   internal:
     internal: true
   proxy-net:
+    external: true
+    name: jeanxxiii-crm_proxy-net
