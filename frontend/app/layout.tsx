@@ -2,7 +2,7 @@ import "./globals.css";
 import LayoutWrapper from "./components/LayoutWrapper";
 
 export const metadata = {
-  title: "DEFI - Vie de classe | Ensemble Scolaire Jean XXIII",
+  title: "DEFI - Vie de classe | Ensemble Scolaire JEAN 23",
 };
 
 export default function RootLayout({
