@@ -255,7 +255,7 @@ function HomeContent() {
   ];
 
   const detailCell =
-    "flex flex-col flex-1 min-h-0 overflow-hidden";
+    "flex flex-col flex-1 min-h-0 overflow-hidden p-1";
 
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-4">
@@ -395,7 +395,7 @@ function HomeContent() {
           </div>
 
           <div
-            className={`grid gap-4 flex-1 min-h-0 ${isAdmin ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}
+            className={`grid auto-rows-fr gap-6 pt-2 px-2 flex-1 min-h-0 ${isAdmin ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}
           >
             <div className={detailCell}>
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
