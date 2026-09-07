@@ -1,24 +1,15 @@
-name: CD - Deploy CRM Production
+name: Deploy DEFI - Vie de classe Prod
 
 on:
   push:
     branches:
       - main
-
 jobs:
-  deploy_prod:
+  deploy:
     runs-on: self-hosted
     steps:
-      - name: Pull latest code and rebuild production
+      - uses: actions/checkout@v3
+      - name: Build and Deploy
         run: |
-          cd /home/jeanxxiii-crm/jeanxxiii-crm
-
-          git pull origin main
-
-          make prod-down
-
-          docker compose -f docker-compose.prod.yml build --no-cache
-
+          make prod-build
           make prod-up
-
-          docker image prune -f

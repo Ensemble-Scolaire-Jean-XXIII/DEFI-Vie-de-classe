@@ -13,6 +13,7 @@ import trimestreRoutes from "./routes/trimestreRoutes";
 import { AppError } from "./utils/appError";
 
 const app = express();
+app.disable("x-powered-by");
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
