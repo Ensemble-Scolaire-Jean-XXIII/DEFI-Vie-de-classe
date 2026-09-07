@@ -1,15 +1,24 @@
-name: Deploy DEFI - Vie de classe Prod
+name: CD - Deploy DEFI Vie de classe
 
 on:
   push:
     branches:
       - main
+
 jobs:
-  deploy:
+  deploy_prod:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and Deploy
+      - name: Pull latest code and rebuild production
         run: |
-          make prod-build
+          cd /home/jeanxxiii-apps/DEFI-Vie-de-classe
+
+          git pull origin main
+
+          make prod-down
+
+          docker compose -f docker-compose.prod.yml build --no-cache
+
           make prod-up
+
+          docker image prune -f
