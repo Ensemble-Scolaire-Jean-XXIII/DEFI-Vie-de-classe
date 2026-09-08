@@ -123,7 +123,7 @@ export default function DataTable<T>({
   return (
     <div className="w-full flex flex-col flex-1 min-h-0">
       <div className="hidden lg:flex flex-col flex-1 min-h-0">
-        {onSearchChange && (
+        {onSearchChange && !hasActions && (
           <div className="shrink-0 flex justify-end px-3 py-2 border-b border-(--border-color)">
             <input
               type="text"
@@ -162,7 +162,17 @@ export default function DataTable<T>({
                   <th
                     className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader}`}
                   >
-                    Actions
+                    {onSearchChange ? (
+                      <input
+                        type="text"
+                        className={`${t.input} w-48 py-1! text-xs! text-left`}
+                        placeholder={searchPlaceholder}
+                        value={searchQuery || ""}
+                        onChange={(e) => onSearchChange(e.target.value)}
+                      />
+                    ) : (
+                      "Actions"
+                    )}
                   </th>
                 )}
               </tr>
