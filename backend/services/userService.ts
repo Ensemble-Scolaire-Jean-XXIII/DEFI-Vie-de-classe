@@ -81,13 +81,22 @@ export const createUser = async (
         data.role || "professeur",
       ],
     );
-    if (!data.password_hash) {
-      await sendWelcomeEmail(data.email, generatedPassword);
-    }
-    return { id, generatedPassword };
   } catch (error: any) {
     return handleDatabaseError(error);
   }
+
+  try {
+    await sendWelcomeEmail(data.email, generatedPassword, {
+      firstName: data.first_name,
+      lastName: data.last_name,
+    });
+  } catch (error: any) {
+    console.error(
+      `[MAIL] Échec de l'envoi du mot de passe à ${data.email} : ${error.message ?? error}`,
+    );
+  }
+
+  return { id, generatedPassword };
 };
 
 /**
@@ -229,21 +238,34 @@ export const login = async (
   return { token, role: user.role };
 };
 
-export const deleteUser = async (id: string, actorRole?: string): Promise<void> => {
+export const deleteUser = async (
+  id: string,
+  actorRole?: string,
+): Promise<void> => {
   const target = await getUserById(id);
   if (target) {
     assertRoleTarget(actorRole, target.role);
   }
+
+  const connection = await pool.getConnection();
   try {
-    const [result]: any = await pool.query("DELETE FROM users WHERE id = ?", [
-      id,
-    ]);
+    await connection.beginTransaction();
+    await connection.query("DELETE FROM points_log WHERE user_id = ?", [id]);
+    await connection.query("DELETE FROM class_users WHERE user_id = ?", [id]);
+    const [result]: any = await connection.query(
+      "DELETE FROM users WHERE id = ?",
+      [id],
+    );
     if (result.affectedRows === 0) {
       throw new AppError("Utilisateur introuvable.", 404);
     }
+    await connection.commit();
   } catch (error: any) {
+    await connection.rollback();
     if (error instanceof AppError) throw error;
     handleDatabaseError(error);
+  } finally {
+    connection.release();
   }
 };
 

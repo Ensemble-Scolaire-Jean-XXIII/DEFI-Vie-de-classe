@@ -25,6 +25,7 @@ export default function DataTable<T>({
   hideActions = false,
   emptyMessage = "Aucun résultat trouvé.",
   actionsAllowed,
+  wrapColsClass = "grid-cols-1 sm:grid-cols-2",
 }: DataTableProps<T> & {
   emptyMessage?: string;
 }) {
@@ -66,7 +67,7 @@ export default function DataTable<T>({
       );
     }
     return (
-      <div className="flex justify-end gap-1.5 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="flex justify-end gap-1.5 opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200">
         {(!actionsAllowed || actionsAllowed(item as T).canEdit !== false) && (
           <button
             onClick={() => item && onEdit(item)}
@@ -103,85 +104,93 @@ export default function DataTable<T>({
     );
   };
 
-  const showActionHeader = !!onSearchChange || !hideActions;
-  const totalColumns = columns.length + (showActionHeader ? 1 : 0);
+  const hasActions = !hideActions;
+  const totalColumns = columns.length + (hasActions ? 1 : 0);
+
+  const SearchBar = () =>
+    onSearchChange ? (
+      <div className="shrink-0">
+        <input
+          type="text"
+          className={`${t.input} w-full`}
+          placeholder={searchPlaceholder}
+          value={searchQuery || ""}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+    ) : null;
 
   return (
-    <div className="w-full flex flex-col">
-      <div className="hidden md:block w-full">
-        <table className="w-full text-left border-collapse whitespace-nowrap text-sm table-fixed">
-          <thead>
-            <tr className="border-b border-(--border-color)">
-              {columns.map((col, i) =>
-                col.sortable && onSort ? (
-                  <SortHeader
-                    key={i}
-                    field={col.field}
-                    label={col.label as string}
-                    sortField={sortField || ""}
-                    sortDirection={sortDirection || "asc"}
-                    onSort={onSort}
-                    className={col.className}
-                  />
-                ) : (
+    <div className="w-full flex flex-col flex-1 min-h-0">
+      <div className="hidden lg:flex flex-col flex-1 min-h-0">
+        {onSearchChange && (
+          <div className="shrink-0 flex justify-end px-3 py-2 border-b border-(--border-color)">
+            <input
+              type="text"
+              className={`${t.input} w-64 py-1! text-xs!`}
+              placeholder={searchPlaceholder}
+              value={searchQuery || ""}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
+        )}
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse whitespace-nowrap text-sm table-fixed">
+            <thead>
+              <tr className="border-b border-(--border-color)">
+                {columns.map((col, i) =>
+                  col.sortable && onSort ? (
+                    <SortHeader
+                      key={i}
+                      field={col.field}
+                      label={col.label as string}
+                      sortField={sortField || ""}
+                      sortDirection={sortDirection || "asc"}
+                      onSort={onSort}
+                      className={col.className}
+                    />
+                  ) : (
+                    <th
+                      key={i}
+                      className={`sticky top-0 z-30 px-3 py-3 font-semibold ${t.tableHeader} ${col.className || ""}`}
+                    >
+                      {col.label as string}
+                    </th>
+                  ),
+                )}
+                {hasActions && (
                   <th
-                    key={i}
-                    className={`sticky top-0 z-30 px-3 py-3 font-semibold ${t.tableHeader} ${col.className || ""}`}
+                    className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader}`}
                   >
-                    {col.label as string}
+                    Actions
                   </th>
-                ),
-              )}
-              {showActionHeader && (
-                <th
-                  className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader}`}
-                >
-                  <div className="flex items-center justify-end gap-2">
-                    {onSearchChange && (
-                      <input
-                        type="text"
-                        className={`${t.input} w-36 py-1! text-xs! font-normal`}
-                        placeholder={searchPlaceholder}
-                        value={searchQuery || ""}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                      />
-                    )}
-                    {!onSearchChange && hideActions && <span>Actions</span>}
-                  </div>
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-(--border-color)">
-            {isLoading ? (
-              <TableSkeleton columns={totalColumns} rows={10} />
-            ) : data.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={totalColumns}
-                  className={`p-6 text-center ${t.textMuted}`}
-                >
-                  {emptyMessage}
-                </td>
+                )}
               </tr>
-            ) : (
-              data.map((item) => {
-                const id = keyExtractor(item);
-                const isEditing = editingId === id;
-                return (
-                  <tr
-                    key={id}
-                    className={`group transition-colors ${t.tableRow} ${isEditing ? "bg-white/5" : ""}`}
+            </thead>
+            <tbody className="divide-y divide-(--border-color)">
+              {isLoading ? (
+                <TableSkeleton columns={totalColumns} rows={10} />
+              ) : data.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={totalColumns}
+                    className={`p-6 text-center break-words whitespace-normal ${t.textMuted}`}
                   >
-                    {columns.map((col, i) => {
-                      const isLast = i === columns.length - 1;
-                      const spanCols =
-                        isLast && hideActions && showActionHeader ? 2 : 1;
-
-                      return (
+                    {emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                data.map((item) => {
+                  const id = keyExtractor(item);
+                  const isEditing = editingId === id;
+                  return (
+                    <tr
+                      key={id}
+                      className={`group transition-colors ${t.tableRow} ${isEditing ? "bg-white/5" : ""}`}
+                    >
+                      {columns.map((col, i) => (
                         <td
                           key={i}
-                          colSpan={spanCols}
                           className={`px-3 py-3.5 truncate ${col.className || ""}`}
                         >
                           {isEditing && col.renderEdit
@@ -190,64 +199,58 @@ export default function DataTable<T>({
                               )
                             : col.render(item)}
                         </td>
-                      );
-                    })}
-                    {!hideActions && (
-                      <td className="px-3 py-3.5 text-right">
-                        <Actions id={id} item={item} />
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      ))}
+                      {hasActions && (
+                        <td className="px-3 py-3.5 text-right">
+                          <Actions id={id} item={item} />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="md:hidden flex flex-col gap-4">
-        {onSearchChange && (
-          <div className="mb-2">
-            <input
-              type="text"
-              className={`${t.input} w-full`}
-              placeholder={searchPlaceholder}
-              value={searchQuery || ""}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-        )}
+      <div className="lg:hidden flex flex-col gap-2 flex-1 min-h-0">
+        <SearchBar />
         {isLoading ? (
           <div className={`p-4 text-center ${t.textMuted}`}>Chargement...</div>
         ) : data.length === 0 ? (
-          <div className={`p-4 text-center ${t.textMuted}`}>{emptyMessage}</div>
+          <div className={`p-4 text-center break-words ${t.textMuted}`}>{emptyMessage}</div>
         ) : (
-          data.map((item) => {
-            const id = keyExtractor(item);
-            return (
-              <div key={id} className={`${t.card} p-4 space-y-4`}>
-                {columns.map((col, i) => (
-                  <div key={i} className="flex flex-col">
-                    <span className="text-xs font-semibold text-(--text-muted) mb-1">
-                      {typeof col.label === "string" ? col.label : "Champ"}
-                    </span>
-                    <div className="text-sm truncate">
-                      {editingId === id && col.renderEdit
-                        ? col.renderEdit(editForm, (val) =>
-                            setEditForm((prev) => ({ ...prev, ...val })),
-                          )
-                        : col.render(item)}
+          <div className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 grid ${wrapColsClass} gap-3 content-start`}>
+            {data.map((item) => {
+              const id = keyExtractor(item);
+              return (
+                <div key={id} className={`${t.card} p-4 h-fit`}>
+                  <dl className="space-y-3">
+                    {columns.map((col, i) => (
+                      <div key={i} className="min-w-0">
+                        <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--text-muted)">
+                          {typeof col.label === "string" ? col.label : "Champ"}
+                        </dt>
+                        <dd className="mt-0.5 text-sm leading-snug break-words">
+                          {editingId === id && col.renderEdit
+                            ? col.renderEdit(editForm, (val) =>
+                                setEditForm((prev) => ({ ...prev, ...val })),
+                              )
+                            : col.render(item)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {hasActions && (
+                    <div className="mt-3 pt-3 border-t border-(--border-color)">
+                      <Actions id={id} item={item} />
                     </div>
-                  </div>
-                ))}
-                {!hideActions && (
-                  <div className="pt-4 border-t border-(--border-color)">
-                    <Actions id={id} item={item} />
-                  </div>
-                )}
-              </div>
-            );
-          })
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

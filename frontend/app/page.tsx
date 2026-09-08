@@ -9,6 +9,7 @@ import DataTable from "./components/DataTable";
 import { useTheme } from "./contexts/ThemeContext";
 import { assetUrl } from "./lib/assetUrl";
 import { parseJwt } from "./lib/auth";
+import StatusIcon from "./components/StatusIcon";
 
 const noop = () => {};
 const LOCK_IMG = "/medalLock.webp";
@@ -134,9 +135,10 @@ function HomeContent() {
     {
       field: "status",
       label: "Statut",
+      className: "w-14 text-center",
       render: () => (
-        <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-          Validé
+        <span className="inline-flex items-center justify-center text-emerald-400">
+          <StatusIcon src="/icons/approved.webp" />
         </span>
       ),
     },
@@ -146,6 +148,7 @@ function HomeContent() {
     {
       field: "medal",
       label: "Médaille",
+      className: "w-20",
       render: (level) =>
         level.validated ? (
           level.medal ? (
@@ -179,14 +182,15 @@ function HomeContent() {
     {
       field: "status",
       label: "Statut",
+      className: "w-14 text-center",
       render: (item) =>
         item.validated ? (
-          <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            Débloqué
+          <span className="inline-flex items-center justify-center text-emerald-400">
+            <StatusIcon src="/icons/approved.webp" />
           </span>
         ) : (
-          <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-md bg-white/5 text-(--text-muted) border border-(--border-color)">
-            Verrouillé
+          <span className="inline-flex items-center justify-center text-(--text-muted)">
+            <StatusIcon src="/icons/cancel.webp" />
           </span>
         ),
     },
@@ -194,33 +198,31 @@ function HomeContent() {
 
   const medalColumns: Column<any>[] = [
     {
-      field: "image",
-      label: "Médaille",
-      render: (medal) =>
-        medal.image ? (
-          <img
-            src={assetUrl(medal.image)}
-            alt={medal.name}
-            className="w-10 h-10 object-contain"
-          />
-        ) : (
-          <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg">
-            🏅
-          </span>
-        ),
-    },
-    {
       field: "name",
       label: "Médaille",
       render: (medal) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {medal.name}
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {medal.image ? (
+            <img
+              src={assetUrl(medal.image)}
+              alt={medal.name}
+              className="w-9 h-9 object-contain shrink-0"
+            />
+          ) : (
+            <span className="w-9 h-9 rounded-lg bg-(--accent)/20 flex items-center justify-center text-base shrink-0">
+              🏅
+            </span>
+          )}
+          <span className="block truncate font-medium text-(--text-main)">
+            {medal.name}
+          </span>
         </span>
       ),
     },
     {
       field: "points_required",
       label: "Points requis",
+      className: "w-32",
       render: (medal) =>
         medal.is_level_medal ? (
           <span className="text-xs text-(--text-muted)">N/A</span>
@@ -255,23 +257,39 @@ function HomeContent() {
   ];
 
   const detailCell =
-    "flex flex-col flex-1 min-h-0 overflow-hidden p-1";
+    "flex flex-col h-[300px] sm:h-[340px] overflow-hidden p-0.5 min-[1152px]:h-auto! min-[1152px]:flex-1 min-[1152px]:min-w-0 min-[1152px]:min-h-0";
 
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-4">
       <PageHeader
         title="Défi Vie de Classe"
         description="Tableau de bord général et suivi des classes"
-      />
+      >
+        {!loading && bestClass && (
+          <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-(--accent)/15 border border-(--accent)/30">
+            <span className="text-2xl leading-none" aria-hidden>
+              🏆
+            </span>
+            <div className="text-left">
+              <p className="text-sm font-bold text-(--text-main) leading-tight">
+                {bestClass.name}
+              </p>
+              <p className="text-[11px] text-(--text-muted) leading-tight">
+                {bestClass.total_points || 0} points gagnés !
+              </p>
+            </div>
+          </div>
+        )}
+      </PageHeader>
 
-      <div className="flex flex-1 min-h-0 gap-4">
-        {/* === Colonne gauche (15%) : stats totales + meilleure classe === */}
-        <div className="flex flex-col gap-4 w-[15%] min-w-0 shrink-0">
-          <div className={`${t.card} flex flex-col gap-4`}>
+      <div className="flex flex-1 min-h-0 gap-4 flex-col min-[1152px]:flex-row">
+        {/* === Colonne gauche : stats totales === */}
+        <div className="flex flex-col gap-4 w-full min-[1152px]:w-[15%] min-w-0 shrink-0 min-[1152px]:min-h-0">
+          <div className={`${t.card} flex flex-col gap-4 min-[1152px]:flex-1 min-[1152px]:min-h-0`}>
             <h3 className="text-lg font-bold text-(--text-main)">
               Statistiques totales
             </h3>
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-1 min-[480px]:grid-cols-3 min-[1152px]:grid-cols-1 min-[1152px]:grid-rows-3 gap-3">
               <div className="p-3 bg-white/5 rounded-xl border border-(--border-color) flex flex-col items-center text-center gap-1">
                 <span className="block text-2xl font-black text-(--accent)">
                   {loading ? (
@@ -308,35 +326,10 @@ function HomeContent() {
               </div>
             </div>
           </div>
-
-          <div className={`${t.card} flex flex-1 flex-col`}>
-            <h3 className="text-lg font-bold mb-4 text-(--text-main)">
-              Meilleure classe
-            </h3>
-            {loading ? (
-              <div className="flex flex-col gap-1.5 p-4 bg-(--accent)/10 border border-(--accent)/30 rounded-xl">
-                <div className="animate-pulse bg-white/10 rounded h-6 w-2/3" />
-                <div className="animate-pulse bg-white/10 rounded h-4 w-1/2" />
-              </div>
-            ) : bestClass ? (
-              <div className="flex flex-col gap-1.5 p-4 bg-(--accent)/10 border border-(--accent)/30 rounded-xl">
-                <span className="text-xl font-black text-(--text-main)">
-                  {bestClass.name}
-                </span>
-                <p className="text-xs text-(--text-muted)">
-                  {bestClass.total_points || 0} points gagnés !
-                </p>
-              </div>
-            ) : (
-              <p className={`text-sm ${t.textMuted}`}>
-                Aucune classe classée pour le moment.
-              </p>
-            )}
-          </div>
         </div>
 
         {/* === Colonne droite (75%) : Récapitulatif par classe === */}
-        <div className={`${t.card} flex flex-col flex-1 min-h-0 overflow-y-auto space-y-4`}>
+        <div className={`${t.card} p-3! sm:p-6! flex flex-col min-[1152px]:flex-1 min-[1152px]:min-h-0 min-[1152px]:overflow-y-auto overflow-visible space-y-4`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
             <h3 className="text-lg font-bold text-(--text-main)">
               Récapitulatif par classe
@@ -369,7 +362,7 @@ function HomeContent() {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4 text-center shrink-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center shrink-0">
             <div className="p-3 bg-white/5 rounded-xl border border-(--border-color)">
               <span className="block text-xl font-bold text-(--accent)">
                 {classDetails?.total_points || 0}
@@ -395,7 +388,7 @@ function HomeContent() {
           </div>
 
           <div
-            className={`grid auto-rows-fr gap-6 pt-2 px-2 flex-1 min-h-0 ${isAdmin ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}
+            className={`grid grid-cols-1 sm:grid-cols-2 gap-4 min-[1152px]:flex min-[1152px]:flex-1 min-[1152px]:min-h-0 min-[1152px]:items-stretch`}
           >
             <div className={detailCell}>
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
@@ -419,6 +412,7 @@ function HomeContent() {
                       onDelete={noop}
                       hideActions
                       emptyMessage="Aucun item validé pour le moment."
+                      wrapColsClass="grid-cols-1"
                     />
                   </ScrollableTableCard>
                 )}
@@ -447,6 +441,7 @@ function HomeContent() {
                       onDelete={noop}
                       hideActions
                       emptyMessage="Aucun niveau défini."
+                      wrapColsClass="grid-cols-1"
                     />
                   </ScrollableTableCard>
                 )}
@@ -475,6 +470,7 @@ function HomeContent() {
                       onDelete={noop}
                       hideActions
                       emptyMessage="Aucune médaille débloquée pour le moment."
+                      wrapColsClass="grid-cols-1"
                     />
                   </ScrollableTableCard>
                 )}
@@ -504,6 +500,7 @@ function HomeContent() {
                         onDelete={noop}
                         hideActions
                         emptyMessage="Aucun point attribué pour cette classe."
+                        wrapColsClass="grid-cols-1"
                       />
                     </ScrollableTableCard>
                   )}

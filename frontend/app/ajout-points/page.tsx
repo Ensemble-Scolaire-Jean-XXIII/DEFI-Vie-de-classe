@@ -120,6 +120,7 @@ export default function AjoutPointsPage() {
     {
       field: "class_name",
       label: "Classe",
+      className: "w-28",
       render: (item) => (
         <span className="block truncate font-medium">{item.class_name}</span>
       ),
@@ -134,6 +135,7 @@ export default function AjoutPointsPage() {
     {
       field: "trimestre_name",
       label: "Trimestre",
+      className: "w-28",
       render: (item) => (
         <span className="block truncate">{item.trimestre_name || "—"}</span>
       ),
@@ -141,6 +143,7 @@ export default function AjoutPointsPage() {
     {
       field: "created_at",
       label: "Date",
+      className: "w-36",
       render: (item) => (
         <span className="block truncate">
           {item.created_at
@@ -152,6 +155,7 @@ export default function AjoutPointsPage() {
     {
       field: "points_awarded",
       label: "Points",
+      className: "w-16",
       render: (item) => (
         <span className="font-semibold text-(--accent)">
           +{item.points_awarded}
