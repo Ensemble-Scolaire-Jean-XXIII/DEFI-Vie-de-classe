@@ -259,9 +259,8 @@ function MaClasseContent() {
         <PageHeader title="Ma classe" description="Aucune classe associée" />
         <div className={`${t.card} p-6`}>
           <p className={`text-sm ${t.textMuted}`}>
-            Aucune classe ne vous est associée en tant que professeur
-            principal. Contactez un administrateur pour vous assigner une
-            classe.
+            Aucune classe ne vous est associée en tant que professeur principal.
+            Contactez un administrateur pour vous assigner une classe.
           </p>
         </div>
       </div>
@@ -299,7 +298,7 @@ function MaClasseContent() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 sm:auto-rows-fr sm:flex-1 sm:min-h-0 gap-4 desktop:grid-cols-3!">
-            <div className="flex flex-col h-[300px] sm:h-auto! overflow-hidden">
+            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Items (validés / bloqueés)
               </h4>
@@ -324,7 +323,7 @@ function MaClasseContent() {
               </div>
             </div>
 
-            <div className="flex flex-col h-[300px] sm:h-auto! overflow-hidden">
+            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Niveaux (validés / bloqués)
               </h4>
@@ -349,7 +348,7 @@ function MaClasseContent() {
               </div>
             </div>
 
-            <div className="flex flex-col h-[300px] sm:h-auto! overflow-hidden">
+            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Médailles (débloquées / bloquées)
               </h4>
@@ -374,7 +373,7 @@ function MaClasseContent() {
               </div>
             </div>
 
-            <div className="flex flex-col h-[300px] sm:h-auto! overflow-hidden">
+            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Professeur(s) et points attribués
               </h4>

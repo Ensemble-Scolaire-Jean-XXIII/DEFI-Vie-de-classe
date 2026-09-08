@@ -21,6 +21,7 @@ import ScrollableTableCard from "../components/ScrollableTableCard";
 import DataTable from "../components/DataTable";
 import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../contexts/ToastContext";
+import { useSort } from "../hooks/useSort";
 
 interface MyPoint {
   class_id: number;
@@ -120,6 +121,7 @@ export default function AjoutPointsPage() {
     {
       field: "class_name",
       label: "Classe",
+      sortable: true,
       className: "w-28",
       render: (item) => (
         <span className="block truncate font-medium">{item.class_name}</span>
@@ -128,6 +130,7 @@ export default function AjoutPointsPage() {
     {
       field: "item_name",
       label: "Comportement",
+      sortable: true,
       render: (item) => (
         <span className="block truncate">{item.item_name}</span>
       ),
@@ -135,6 +138,7 @@ export default function AjoutPointsPage() {
     {
       field: "trimestre_name",
       label: "Trimestre",
+      sortable: true,
       className: "w-28",
       render: (item) => (
         <span className="block truncate">{item.trimestre_name || "—"}</span>
@@ -143,6 +147,7 @@ export default function AjoutPointsPage() {
     {
       field: "created_at",
       label: "Date",
+      sortable: true,
       className: "w-36",
       render: (item) => (
         <span className="block truncate">
@@ -155,6 +160,7 @@ export default function AjoutPointsPage() {
     {
       field: "points_awarded",
       label: "Points",
+      sortable: true,
       className: "w-16",
       render: (item) => (
         <span className="font-semibold text-(--accent)">
@@ -163,6 +169,38 @@ export default function AjoutPointsPage() {
       ),
     },
   ];
+
+  const { sortField, sortDirection, handleSort } = useSort(
+    "created_at",
+    "desc",
+  );
+
+  const sortedPoints = [...myPoints].sort((a, b) => {
+    let compareResult = 0;
+    switch (sortField) {
+      case "created_at":
+        compareResult =
+          (a.created_at ? new Date(a.created_at).getTime() : 0) -
+          (b.created_at ? new Date(b.created_at).getTime() : 0);
+        break;
+      case "points_awarded":
+        compareResult = (a.points_awarded || 0) - (b.points_awarded || 0);
+        break;
+      case "class_name":
+        compareResult = (a.class_name || "").localeCompare(b.class_name || "");
+        break;
+      case "trimestre_name":
+        compareResult = (a.trimestre_name || "").localeCompare(
+          b.trimestre_name || "",
+        );
+        break;
+      case "item_name":
+      default:
+        compareResult = (a.item_name || "").localeCompare(b.item_name || "");
+        break;
+    }
+    return sortDirection === "asc" ? compareResult : -compareResult;
+  });
 
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-4">
@@ -237,12 +275,10 @@ export default function AjoutPointsPage() {
       <div className="flex flex-col min-h-0 flex-1">
         <h2
           className={`${t.title} text-xl tracking-tight drop-shadow-md shrink-0 mb-2`}
-        >
-          Mes points attribués
-        </h2>
+        ></h2>
         <ScrollableTableCard>
           <DataTable
-            data={myPoints}
+            data={sortedPoints}
             columns={columns}
             keyExtractor={(item) =>
               `${item.class_id}-${item.item_id}-${item.trimestre_id}-${item.created_at || ""}`
@@ -255,6 +291,9 @@ export default function AjoutPointsPage() {
             onCancel={noop}
             onDelete={noop}
             hideActions
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
             isLoading={loadingPoints}
             emptyMessage="Vous n'avez encore attribué aucun point."
           />
