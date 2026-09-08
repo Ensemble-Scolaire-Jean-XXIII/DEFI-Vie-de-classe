@@ -14,11 +14,13 @@ function NavLink({
   iconSrc,
   iconAlt,
   children,
+  onNavigate,
 }: {
   href: string;
   iconSrc: string;
   iconAlt: string;
   children: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const isActive = pathname === href;
@@ -28,6 +30,7 @@ function NavLink({
     <Link
       href={href}
       title={String(children)}
+      onClick={onNavigate}
       className={`relative px-4 py-2 rounded-xl transition-all duration-200 flex items-center gap-2 font-medium whitespace-nowrap ${
         isActive ? t.activeNav : t.navHover
       }`}
@@ -250,6 +253,20 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
     }
   }, [isLoginPage, handleLogout]);
 
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const mql = window.matchMedia("(min-width: 1600px)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (e.matches) setIsMobileMenuOpen(false);
+    };
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [isMobileMenuOpen]);
+
   if (isLoginPage) return <>{children}</>;
 
   if (isLoading)
@@ -267,7 +284,11 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <div className={t.wrapper}>
       <header className={`${t.header} relative z-50`}>
-        <div className="flex items-center gap-3 shrink-0">
+        <Link
+          href="/"
+          title="Retour à l'accueil"
+          className="flex items-center gap-3 shrink-0 transition-opacity hover:opacity-90"
+        >
           <div className="h-9 w-auto relative flex items-center shrink-0">
             <Image
               src="/defiVDC.webp"
@@ -289,7 +310,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               DÉFI - Vie de classe
             </span>
           </div>
-        </div>
+        </Link>
 
         <nav className="hidden desktop:flex items-center gap-2 mx-auto">
           <NavLink
@@ -385,15 +406,29 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {isMobileMenuOpen && (
-        <div className="desktop:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-6 gap-6">
-          <div className="flex justify-end">
+      <div
+        className={`desktop:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md transition-opacity duration-300 ${
+          isMobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <div
+          className={`absolute inset-y-0 left-0 w-80 max-w-[85vw] bg-(--bg-header) border-r border-white/10 p-6 flex flex-col gap-6 transition-transform duration-300 ease-out ${
+            isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-white uppercase tracking-widest text-sm">
+              Menu
+            </span>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 text-white bg-white/10 rounded-full"
+              className="p-2 text-white bg-white/10 rounded-full transition-colors cursor-pointer hover:bg-white/20"
+              aria-label="Fermer le menu"
             >
               <svg
-                className="w-6 h-6"
+                className="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -407,11 +442,12 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
               </svg>
             </button>
           </div>
-          <nav className="flex flex-col gap-4">
+          <nav className="flex flex-col gap-4 overflow-y-auto">
             <NavLink
               href="/"
               iconSrc="/icons/leaderboard.webp"
               iconAlt="leaderboard"
+              onNavigate={() => setIsMobileMenuOpen(false)}
             >
               Progression par classe
             </NavLink>
@@ -420,6 +456,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 href="/ajout-points"
                 iconSrc="/icons/submitAlt.webp"
                 iconAlt="Attribuer"
+                onNavigate={() => setIsMobileMenuOpen(false)}
               >
                 Attribuer des points
               </NavLink>
@@ -429,6 +466,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                 href="/ma-classe"
                 iconSrc="/icons/dashboard.webp"
                 iconAlt="Ma classe"
+                onNavigate={() => setIsMobileMenuOpen(false)}
               >
                 Ma classe
               </NavLink>
@@ -442,6 +480,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                   href="/classes-trimestres"
                   iconSrc="/icons/formations.webp"
                   iconAlt="Classes & Trimestres"
+                  onNavigate={() => setIsMobileMenuOpen(false)}
                 >
                   Classes & Trimestres
                 </NavLink>
@@ -449,6 +488,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                   href="/niveaux-items"
                   iconSrc="/icons/levels.webp"
                   iconAlt="Niveaux & Items"
+                  onNavigate={() => setIsMobileMenuOpen(false)}
                 >
                   Niveaux & Items
                 </NavLink>
@@ -456,6 +496,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                   href="/medailles"
                   iconSrc="/icons/medal.webp"
                   iconAlt="Médailles"
+                  onNavigate={() => setIsMobileMenuOpen(false)}
                 >
                   Médailles
                 </NavLink>
@@ -463,6 +504,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
                   href="/utilisateurs"
                   iconSrc="/icons/users.webp"
                   iconAlt="Users"
+                  onNavigate={() => setIsMobileMenuOpen(false)}
                 >
                   Utilisateurs
                 </NavLink>
@@ -470,7 +512,7 @@ function LayoutInner({ children }: { children: React.ReactNode }) {
             )}
           </nav>
         </div>
-      )}
+      </div>
 
       <main className={`${t.main} custom-scrollbar`}>{children}</main>
     </div>

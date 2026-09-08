@@ -90,7 +90,7 @@ const themes: Record<ThemeName, ThemeContextType["t"]> = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeName, setThemeName] = useState<ThemeName>("shadowIslands");
+  const [themeName, setThemeName] = useState<ThemeName>("institution");
 
   useEffect(() => {
     const saved = localStorage.getItem("crm-theme") as ThemeName;
@@ -114,7 +114,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       value={{
         themeName,
         setThemeName: handleSetTheme,
-        t: themes[themeName] || themes.shadowIslands,
+        t: themes[themeName] || themes.institution,
       }}
     >
       {children}

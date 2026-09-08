@@ -277,7 +277,9 @@ function ClassesPanel({
       field: "role",
       label: "Rôle",
       render: (cu: any) =>
-        cu.is_principal ? (
+        cu.role === "admin" ? (
+          <span className={`text-sky-400 font-medium`}>Admin</span>
+        ) : cu.is_principal ? (
           <span className={`text-emerald-400 font-medium`}>Principal</span>
         ) : (
           <span className={t.textMuted}>Professeur</span>
@@ -407,11 +409,15 @@ function ClassesPanel({
                 >
                   <option value="">Sélectionner un professeur</option>
                   {allUsers
-                    .filter((u) => u.role === "professeur")
+                    .filter(
+                      (u) =>
+                        u.role === "professeur" || u.role === "admin",
+                    )
                     .filter((u) => !classUsers.some((cu) => cu.id === u.id))
                     .map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.first_name} {u.last_name} ({u.email})
+                        {u.first_name} {u.last_name} ({u.email}) —{" "}
+                        {u.role === "admin" ? "Admin" : "Professeur"}
                       </option>
                     ))}
                 </select>

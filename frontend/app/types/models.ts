@@ -195,6 +195,7 @@ export interface DataTableProps<T> {
   isLoading?: boolean;
   hideActions?: boolean;
   emptyMessage?: string;
+  wrapColsClass?: string;
   actionsAllowed?: (item: T) => { canEdit?: boolean; canDelete?: boolean };
 }
 

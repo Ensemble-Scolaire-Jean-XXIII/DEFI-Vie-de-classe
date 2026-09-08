@@ -191,7 +191,7 @@ const getClassProgressPublic = async (
     (level) => level.validated,
   );
 
-  const medals = await computeUnlockedMedals(
+  const medalsStatus = await computeMedalsStatus(
     completedLevels,
     globalTotal,
   );
@@ -200,12 +200,14 @@ const getClassProgressPublic = async (
     total_points: globalTotal,
     completed_items: completedItems,
     completed_levels: completedLevels,
+    items: Array.from(itemsMap.values()),
     levels: Array.from(levelsMap.values()),
-    medals,
+    medals: medalsStatus.unlocked,
+    all_medals: medalsStatus.all,
   };
 };
 
-const computeUnlockedMedals = async (
+const computeMedalsStatus = async (
   completedLevels: any[],
   totalPoints: number,
 ) => {
@@ -213,7 +215,7 @@ const computeUnlockedMedals = async (
     "SELECT id, name, image, points_required, is_level_medal FROM global_medals",
   );
 
-  const unlocked = new Map<number, any>();
+  const unlockedIds = new Set<number>();
 
   const validatedLevelIds = completedLevels
     .map((l) => l.id)
@@ -227,7 +229,7 @@ const computeUnlockedMedals = async (
       [validatedLevelIds],
     );
     for (const row of levelMedalRows) {
-      unlocked.set(row.id, row);
+      unlockedIds.add(row.id);
     }
   }
 
@@ -236,11 +238,18 @@ const computeUnlockedMedals = async (
       !medal.is_level_medal &&
       Number(medal.points_required) <= totalPoints
     ) {
-      unlocked.set(medal.id, medal);
+      unlockedIds.add(medal.id);
     }
   }
 
-  return Array.from(unlocked.values());
+  const unlocked: any[] = [];
+  const all = allMedals.map((medal: any) => {
+    const isUnlocked = unlockedIds.has(medal.id);
+    if (isUnlocked) unlocked.push(medal);
+    return { ...medal, unlocked: isUnlocked, locked: !isUnlocked };
+  });
+
+  return { unlocked, all };
 };
 
 export const getClassById = async (id: number) => {

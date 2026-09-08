@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { userService } from "../services/userService";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { ToastProvider, useToast } from "../contexts/ToastContext";
@@ -29,9 +30,15 @@ function LoginPageContent() {
     <div className={t.wrapper + " items-center justify-center"}>
       <div className={`${t.card} w-full max-w-md p-8 sm:p-10 z-10 shadow-2xl`}>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-(--text-main) mb-1">
-            Défi Vie de Classe
-          </h1>
+          <Link
+            href="/"
+            title="Retour à l'accueil"
+            className="inline-block transition-opacity hover:opacity-80"
+          >
+            <h1 className="text-3xl font-bold text-(--text-main) mb-1">
+              Défi Vie de Classe
+            </h1>
+          </Link>
           <p className="text-(--text-muted) text-sm">
             Connexion à l'espace sécurisé
           </p>
@@ -70,6 +77,28 @@ function LoginPageContent() {
             </span>
           </div>
         </form>
+
+        <div className="mt-6 pt-6 border-t border-(--border-color)">
+          <Link
+            href="/"
+            className={`flex items-center justify-center gap-2 text-sm ${t.textMuted} transition-colors hover:text-(--text-main)`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Retour à l'accueil
+          </Link>
+        </div>
       </div>
     </div>
   );
