@@ -194,6 +194,12 @@ const activateNextTrimestre = async (
   }
 };
 
+const toDateInput = (value?: string): string | undefined => {
+  if (!value) return value;
+  const s = String(value);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+};
+
 export const getAllTrimestres = async (): Promise<Trimestre[]> => {
   try {
     const [rows] = await pool.query("SELECT * FROM trimestres");
@@ -216,7 +222,12 @@ export const createTrimestre = async (data: {
     }
     const [result]: any = await pool.query(
       "INSERT INTO trimestres (name, start_date, end_date, is_active) VALUES (?, ?, ?, ?)",
-      [data.name, data.start_date, data.end_date, activate ? 1 : 0],
+      [
+        data.name,
+        toDateInput(data.start_date),
+        toDateInput(data.end_date),
+        activate ? 1 : 0,
+      ],
     );
     await syncActiveTrimestresByDate();
     return result.insertId;
@@ -241,7 +252,13 @@ export const updateTrimestre = async (
     }
     await pool.query(
       "UPDATE trimestres SET name = COALESCE(?, name), start_date = COALESCE(?, start_date), end_date = COALESCE(?, end_date), is_active = COALESCE(?, is_active) WHERE id = ?",
-      [data.name, data.start_date, data.end_date, data.is_active, id],
+      [
+        data.name,
+        toDateInput(data.start_date),
+        toDateInput(data.end_date),
+        data.is_active,
+        id,
+      ],
     );
 
     if (explicitActivate) {
