@@ -535,6 +535,12 @@ function TrimestresPanel({
     return sortDirection === "asc" ? compareResult : -compareResult;
   });
 
+  const toISODate = (val?: string | null): string => {
+    if (!val) return "";
+    const s = String(val);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+  };
+
   const columns: Column<Trimestre>[] = [
     {
       field: "name",
@@ -574,7 +580,7 @@ function TrimestresPanel({
         <input
           type="date"
           className={`${t.input} py-1! px-2! text-xs!`}
-          value={form.start_date || ""}
+          value={toISODate(form.start_date)}
           onChange={(e) => update({ start_date: e.target.value })}
         />
       ),
@@ -594,7 +600,7 @@ function TrimestresPanel({
         <input
           type="date"
           className={`${t.input} py-1! px-2! text-xs!`}
-          value={form.end_date || ""}
+          value={toISODate(form.end_date)}
           onChange={(e) => update({ end_date: e.target.value })}
         />
       ),

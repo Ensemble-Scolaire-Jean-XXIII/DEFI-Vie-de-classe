@@ -135,7 +135,7 @@ export default function DataTable<T>({
           </div>
         )}
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse whitespace-nowrap text-sm table-fixed">
+          <table className="w-full text-left border-collapse text-sm table-fixed">
             <thead>
               <tr className="border-b border-(--border-color)">
                 {columns.map((col, i) =>
