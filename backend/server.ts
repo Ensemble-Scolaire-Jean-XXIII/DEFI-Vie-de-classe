@@ -10,6 +10,7 @@ import levelRoutes from "./routes/levelRoutes";
 import globalMedalRoutes from "./routes/globalMedalRoutes";
 import pointRoutes from "./routes/pointRoutes";
 import trimestreRoutes from "./routes/trimestreRoutes";
+import { startTrimestreScheduler } from "./jobs/trimestreScheduler";
 import { AppError } from "./utils/appError";
 
 const app = express();
@@ -37,4 +38,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  startTrimestreScheduler();
 });

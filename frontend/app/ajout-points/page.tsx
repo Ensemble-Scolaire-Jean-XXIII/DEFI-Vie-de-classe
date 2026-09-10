@@ -131,6 +131,7 @@ export default function AjoutPointsPage() {
       field: "item_name",
       label: "Comportement",
       sortable: true,
+      className: "w-56",
       render: (item) => (
         <span className="block truncate">{item.item_name}</span>
       ),

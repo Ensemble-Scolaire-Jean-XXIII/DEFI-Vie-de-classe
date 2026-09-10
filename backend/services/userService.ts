@@ -223,6 +223,7 @@ export const login = async (
 ): Promise<{ token: string; role: string }> => {
   const user = await getUserByEmail(email);
   if (!user) {
+    await bcrypt.hash(password, 10);
     throw new AppError("Identifiants invalides.", 401);
   }
   const valid = await bcrypt.compare(password, user.password_hash);
