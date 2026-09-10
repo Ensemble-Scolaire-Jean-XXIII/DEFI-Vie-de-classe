@@ -1,10 +1,20 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import * as userService from "../services/userService";
 import { authenticate, requireRole } from "../middleware/auth";
 
 const router = Router();
 
-router.post("/connexion", async (req, res, next) => {
+const loginLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.body.email || "anonymous",
+  message: { error: "Trop de tentatives. Réessayez dans 30 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.post("/connexion", loginLimiter, async (req, res, next) => {
   try {
     const { email, password_hash } = req.body;
     const result = await userService.login(email, password_hash);
