@@ -200,6 +200,39 @@ const toDateInput = (value?: string): string | undefined => {
   return s.length >= 10 ? s.slice(0, 10) : s;
 };
 
+const isIsoDate = (s: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+const validatePeriod = (start: string, end: string): void => {
+  if (!isIsoDate(start) || !isIsoDate(end)) {
+    throw new AppError("Format de date invalide (attendu AAAA-MM-JJ).", 400);
+  }
+  if (start > end) {
+    throw new AppError("La date de début doit précéder la date de fin.", 400);
+  }
+};
+
+const assertNoDateOverlap = async (
+  start: string,
+  end: string,
+  excludeId?: number,
+): Promise<void> => {
+  const [rows]: any = await pool.query(
+    `SELECT id, name,
+            CAST(start_date AS CHAR) AS start_date,
+            CAST(end_date AS CHAR) AS end_date
+     FROM trimestres
+     WHERE id <> COALESCE(?, -1)
+       AND (? <= end_date AND ? >= start_date)`,
+    [excludeId ?? -1, start, end],
+  );
+  if (rows.length > 0) {
+    throw new AppError(
+      `La période sélectionnée chevauche le trimestre "${rows[0].name}" (${rows[0].start_date} → ${rows[0].end_date}).`,
+      409,
+    );
+  }
+};
+
 export const getAllTrimestres = async (): Promise<Trimestre[]> => {
   try {
     const [rows] = await pool.query("SELECT * FROM trimestres");
@@ -216,22 +249,26 @@ export const createTrimestre = async (data: {
   is_active?: boolean;
 }): Promise<number> => {
   try {
+    const start = toDateInput(data.start_date);
+    const end = toDateInput(data.end_date);
+    if (!start || !end) {
+      throw new AppError("Les dates de début et de fin sont requises.", 400);
+    }
+    validatePeriod(start, end);
+    await assertNoDateOverlap(start, end);
+
     const activate = Boolean(data.is_active);
     if (activate) {
       await pool.query("UPDATE trimestres SET is_active = 0");
     }
     const [result]: any = await pool.query(
       "INSERT INTO trimestres (name, start_date, end_date, is_active) VALUES (?, ?, ?, ?)",
-      [
-        data.name,
-        toDateInput(data.start_date),
-        toDateInput(data.end_date),
-        activate ? 1 : 0,
-      ],
+      [data.name, start, end, activate ? 1 : 0],
     );
     await syncActiveTrimestresByDate();
     return result.insertId;
   } catch (error: any) {
+    if (error instanceof AppError) throw error;
     throw handleDatabaseError(error);
   }
 };
@@ -246,6 +283,21 @@ export const updateTrimestre = async (
   },
 ): Promise<void> => {
   try {
+    const [current]: any = await pool.query(
+      "SELECT CAST(start_date AS CHAR) AS start_date, CAST(end_date AS CHAR) AS end_date FROM trimestres WHERE id = ?",
+      [id],
+    );
+    if (current.length === 0) {
+      throw new AppError("Trimestre introuvable.", 404);
+    }
+
+    const effStart = toDateInput(data.start_date) ?? current[0].start_date;
+    const effEnd = toDateInput(data.end_date) ?? current[0].end_date;
+    if (effStart && effEnd) {
+      validatePeriod(effStart, effEnd);
+      await assertNoDateOverlap(effStart, effEnd, id);
+    }
+
     const explicitActivate = data.is_active === true;
     if (explicitActivate) {
       await deactivateOthers(id);
@@ -269,6 +321,7 @@ export const updateTrimestre = async (
       await syncActiveTrimestresByDate();
     }
   } catch (error: any) {
+    if (error instanceof AppError) throw error;
     throw handleDatabaseError(error);
   }
 };
