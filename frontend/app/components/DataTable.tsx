@@ -160,12 +160,12 @@ export default function DataTable<T>({
                 )}
                 {hasActions && (
                   <th
-                    className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader}`}
+                    className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader} min-w-0`}
                   >
                     {onSearchChange ? (
                       <input
                         type="text"
-                        className={`${t.input} w-48 py-1! text-xs! text-left`}
+                        className={`${t.input} w-full py-1! text-xs! text-left`}
                         placeholder={searchPlaceholder}
                         value={searchQuery || ""}
                         onChange={(e) => onSearchChange(e.target.value)}
@@ -184,7 +184,7 @@ export default function DataTable<T>({
                 <tr>
                   <td
                     colSpan={totalColumns}
-                    className={`p-6 text-center break-words whitespace-normal ${t.textMuted}`}
+                    className={`p-6 text-center wrap-break-word whitespace-normal ${t.textMuted}`}
                   >
                     {emptyMessage}
                   </td>
@@ -229,9 +229,13 @@ export default function DataTable<T>({
         {isLoading ? (
           <div className={`p-4 text-center ${t.textMuted}`}>Chargement...</div>
         ) : data.length === 0 ? (
-          <div className={`p-4 text-center break-words ${t.textMuted}`}>{emptyMessage}</div>
+          <div className={`p-4 text-center wrap-break-word ${t.textMuted}`}>
+            {emptyMessage}
+          </div>
         ) : (
-          <div className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 grid ${wrapColsClass} gap-3 content-start`}>
+          <div
+            className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 grid ${wrapColsClass} gap-3 content-start`}
+          >
             {data.map((item) => {
               const id = keyExtractor(item);
               return (
@@ -242,7 +246,7 @@ export default function DataTable<T>({
                         <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--text-muted)">
                           {typeof col.label === "string" ? col.label : "Champ"}
                         </dt>
-                        <dd className="mt-0.5 text-sm leading-snug break-words">
+                        <dd className="mt-0.5 text-sm leading-snug wrap-break-word">
                           {editingId === id && col.renderEdit
                             ? col.renderEdit(editForm, (val) =>
                                 setEditForm((prev) => ({ ...prev, ...val })),
