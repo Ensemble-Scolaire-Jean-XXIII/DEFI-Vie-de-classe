@@ -281,16 +281,10 @@ function HomeContent() {
         {!loading && bestClass && (
           <div className="w-full sm:w-72 flex items-center justify-center sm:justify-start gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-(--accent)/25 to-transparent border border-(--accent)/40 shadow-[0_0_30px_-5px_rgba(232,78,27,0.4)]">
             <span className="relative w-16 h-16 shrink-0 flex items-center justify-center">
-              <span
-                className="absolute inset-0 flex items-center justify-center text-4xl leading-none"
-                aria-hidden
-              >
-                🏆
-              </span>
               <img
                 src="/trophy.webp"
                 alt="Trophée"
-                className="relative w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(232,78,27,0.6)]"
+                className="w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(232,78,27,0.6)]"
               />
             </span>
             <div className="text-left">
