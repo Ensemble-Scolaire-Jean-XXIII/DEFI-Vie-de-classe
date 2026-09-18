@@ -267,7 +267,7 @@ function UsersContent() {
   ];
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-4 overflow-hidden">
       <PageHeader
         title="Utilisateurs"
         description="Gérez les accès et les rôles des utilisateurs"

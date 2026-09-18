@@ -55,15 +55,38 @@ function MaClasseContent() {
       field: "item_name",
       label: "Item",
       render: (item) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {item.item_name}
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {item.validated ? (
+            item.item_image ? (
+              <img
+                src={assetUrl(item.item_image)}
+                alt={item.item_name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            ) : (
+              <img
+                src="/defiVDC.webp"
+                alt={item.item_name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            )
+          ) : (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-10 h-10 object-contain opacity-40 grayscale shrink-0"
+            />
+          )}
+          <span className="block truncate font-medium text-(--text-main)">
+            {item.item_name}
+          </span>
         </span>
       ),
     },
     {
       field: "status",
       label: "Statut",
-      className: "w-16 text-center",
+      className: "w-24 text-center",
       render: (item) =>
         item.validated ? (
           <span className="inline-flex items-center justify-center text-emerald-400">
@@ -79,43 +102,39 @@ function MaClasseContent() {
 
   const levelColumns: Column<any>[] = [
     {
-      field: "medal",
-      label: "Médaille",
-      className: "w-20",
-      render: (level) =>
-        level.validated ? (
-          level.medal ? (
-            <img
-              src={assetUrl(level.medal)}
-              alt={level.name}
-              className="w-10 h-10 object-contain"
-            />
-          ) : (
-            <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg">
-              🏆
-            </span>
-          )
-        ) : (
-          <img
-            src={LOCK_IMG}
-            alt="Verrouillé"
-            className="w-10 h-10 object-contain opacity-40 grayscale"
-          />
-        ),
-    },
-    {
       field: "name",
       label: "Niveau",
-      render: (item) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {item.name}
+      render: (level) => (
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {level.validated ? (
+            level.medal ? (
+              <img
+                src={assetUrl(level.medal)}
+                alt={level.name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            ) : (
+              <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg shrink-0">
+                🏆
+              </span>
+            )
+          ) : (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-10 h-10 object-contain opacity-40 grayscale shrink-0"
+            />
+          )}
+          <span className="block truncate font-medium text-(--text-main)">
+            {level.name}
+          </span>
         </span>
       ),
     },
     {
       field: "status",
       label: "Statut",
-      className: "w-16 text-center",
+      className: "w-24 text-center",
       render: (item) =>
         item.validated ? (
           <span className="inline-flex items-center justify-center text-emerald-400">
@@ -131,36 +150,32 @@ function MaClasseContent() {
 
   const medalColumns: Column<any>[] = [
     {
-      field: "image",
-      label: "Médaille",
-      className: "w-16",
-      render: (medal) =>
-        medal.unlocked ? (
-          medal.image ? (
-            <img
-              src={assetUrl(medal.image)}
-              alt={medal.name}
-              className="w-10 h-10 object-contain"
-            />
-          ) : (
-            <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg">
-              🏅
-            </span>
-          )
-        ) : (
-          <img
-            src={LOCK_IMG}
-            alt="Verrouillé"
-            className="w-10 h-10 object-contain opacity-40 grayscale"
-          />
-        ),
-    },
-    {
       field: "name",
       label: "Médaille",
       render: (medal) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {medal.name}
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {medal.unlocked ? (
+            medal.image ? (
+              <img
+                src={assetUrl(medal.image)}
+                alt={medal.name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            ) : (
+              <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg shrink-0">
+                🏅
+              </span>
+            )
+          ) : (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-10 h-10 object-contain opacity-40 grayscale shrink-0"
+            />
+          )}
+          <span className="block truncate font-medium text-(--text-main)">
+            {medal.name}
+          </span>
         </span>
       ),
     },
@@ -178,7 +193,7 @@ function MaClasseContent() {
     {
       field: "status",
       label: "Statut",
-      className: "w-16 text-center",
+      className: "w-24 text-center",
       render: (medal) =>
         medal.unlocked ? (
           <span className="inline-flex items-center justify-center text-emerald-400">
@@ -297,32 +312,7 @@ function MaClasseContent() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 sm:auto-rows-fr sm:flex-1 sm:min-h-0 gap-4 desktop:grid-cols-3!">
-            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
-              <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
-                Items (validés / bloqueés)
-              </h4>
-              <div className="flex flex-col flex-1 min-h-0">
-                <ScrollableTableCard>
-                  <DataTable
-                    data={details.items || []}
-                    columns={itemColumns}
-                    keyExtractor={(item) => item.id}
-                    editingId={null}
-                    editForm={{}}
-                    setEditForm={noop as any}
-                    onEdit={noop}
-                    onSave={noop}
-                    onCancel={noop}
-                    onDelete={noop}
-                    hideActions
-                    emptyMessage="Aucun item défini."
-                    wrapColsClass="grid-cols-1"
-                  />
-                </ScrollableTableCard>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 sm:auto-rows-fr sm:flex-1 sm:min-h-0 gap-4 desktop:grid-cols-4! desktop:grid-rows-1!">
             <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Niveaux (validés / bloqués)
@@ -342,6 +332,31 @@ function MaClasseContent() {
                     onDelete={noop}
                     hideActions
                     emptyMessage="Aucun niveau défini."
+                    wrapColsClass="grid-cols-1"
+                  />
+                </ScrollableTableCard>
+              </div>
+            </div>
+
+            <div className="flex flex-col h-75 sm:h-auto! overflow-hidden">
+              <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
+                Items (validés / bloqués)
+              </h4>
+              <div className="flex flex-col flex-1 min-h-0">
+                <ScrollableTableCard>
+                  <DataTable
+                    data={details.items || []}
+                    columns={itemColumns}
+                    keyExtractor={(item) => item.id}
+                    editingId={null}
+                    editForm={{}}
+                    setEditForm={noop as any}
+                    onEdit={noop}
+                    onSave={noop}
+                    onCancel={noop}
+                    onDelete={noop}
+                    hideActions
+                    emptyMessage="Aucun item défini."
                     wrapColsClass="grid-cols-1"
                   />
                 </ScrollableTableCard>

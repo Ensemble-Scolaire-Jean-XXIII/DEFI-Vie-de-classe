@@ -22,7 +22,7 @@ export default function PageActions({
 
   if (showNew || onToggleNew) {
     return (
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center shrink-0 whitespace-nowrap">
         {onRefresh && <RefreshButton onRefresh={onRefresh} />}
         {onToggleNew && (
           <button

@@ -8,7 +8,7 @@ export default function StatusIcon({
   return (
     <span
       aria-hidden
-      className={`inline-block h-5 w-5 shrink-0 bg-current ${className}`}
+      className={`inline-block h-5 w-5 lg:h-4 lg:w-4 min-[1152px]:h-5 min-[1152px]:w-5 shrink-0 bg-current ${className}`}
       style={{
         WebkitMaskImage: `url(${src})`,
         maskImage: `url(${src})`,
