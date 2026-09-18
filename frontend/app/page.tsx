@@ -38,11 +38,6 @@ function HomeContent() {
   const [classes, setClasses] = useState<ClassEntity[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<number | "">("");
   const [classDetails, setClassDetails] = useState<any>(null);
-  const [globalStats, setGlobalStats] = useState({
-    totalPoints: 0,
-    totalItems: 0,
-    totalLevels: 0,
-  });
   const [isAdmin, setIsAdmin] = useState(false);
   const [teacherPoints, setTeacherPoints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,20 +65,6 @@ function HomeContent() {
       try {
         const leaderboard: ClassEntity[] = await classService.getLeaderboard();
         setClasses(leaderboard);
-
-        let pSum = 0;
-        let iSum = 0;
-        let lSum = 0;
-        leaderboard.forEach((c: any) => {
-          pSum += c.total_points || 0;
-          iSum += c.completed_items || 0;
-          lSum += c.completed_levels || 0;
-        });
-        setGlobalStats({
-          totalPoints: pSum,
-          totalItems: iSum,
-          totalLevels: lSum,
-        });
 
         if (leaderboard.length > 0 && selectedClassId === "") {
           setSelectedClassId(leaderboard[0].id);
@@ -127,62 +108,86 @@ function HomeContent() {
       field: "item_name",
       label: "Item",
       render: (item) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {item.item_name}
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {item.validated ? (
+            item.item_image ? (
+              <img
+                src={assetUrl(item.item_image)}
+                alt={item.item_name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            ) : (
+              <img
+                src="/defiVDC.webp"
+                alt={item.item_name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            )
+          ) : (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-10 h-10 object-contain opacity-40 grayscale shrink-0"
+            />
+          )}
+          <span className="block font-medium text-(--text-main) lg:truncate">
+            {item.item_name}
+          </span>
         </span>
       ),
     },
     {
       field: "status",
       label: "Statut",
-      className: "w-14 text-center",
-      render: () => (
-        <span className="inline-flex items-center justify-center text-emerald-400">
-          <StatusIcon src="/icons/approved.webp" />
-        </span>
-      ),
+      className: "w-24 text-center",
+      render: (item) =>
+        item.validated ? (
+          <span className="inline-flex items-center justify-center text-emerald-400">
+            <StatusIcon src="/icons/approved.webp" />
+          </span>
+        ) : (
+          <span className="inline-flex items-center justify-center text-(--text-muted)">
+            <StatusIcon src="/icons/cancel.webp" />
+          </span>
+        ),
     },
   ];
 
   const levelColumns: Column<any>[] = [
     {
-      field: "medal",
-      label: "Médaille",
-      className: "w-20",
-      render: (level) =>
-        level.validated ? (
-          level.medal ? (
-            <img
-              src={assetUrl(level.medal)}
-              alt={level.name}
-              className="w-10 h-10 object-contain"
-            />
-          ) : (
-            <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg">
-              🏆
-            </span>
-          )
-        ) : (
-          <img
-            src={LOCK_IMG}
-            alt="Verrouillé"
-            className="w-10 h-10 object-contain opacity-40 grayscale"
-          />
-        ),
-    },
-    {
       field: "name",
       label: "Niveau",
-      render: (item) => (
-        <span className="block truncate font-medium text-(--text-main)">
-          {item.name}
+      render: (level) => (
+        <span className="inline-flex items-center gap-2.5 min-w-0">
+          {level.validated ? (
+            level.medal ? (
+              <img
+                src={assetUrl(level.medal)}
+                alt={level.name}
+                className="w-10 h-10 object-contain rounded-lg bg-white/5 shrink-0"
+              />
+            ) : (
+              <span className="w-10 h-10 rounded-lg bg-(--accent)/20 flex items-center justify-center text-lg shrink-0">
+                🏆
+              </span>
+            )
+          ) : (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-10 h-10 object-contain opacity-40 grayscale shrink-0"
+            />
+          )}
+          <span className="block font-medium text-(--text-main) lg:truncate">
+            {level.name}
+          </span>
         </span>
       ),
     },
     {
       field: "status",
       label: "Statut",
-      className: "w-14 text-center",
+      className: "w-24 text-center",
       render: (item) =>
         item.validated ? (
           <span className="inline-flex items-center justify-center text-emerald-400">
@@ -202,7 +207,13 @@ function HomeContent() {
       label: "Médaille",
       render: (medal) => (
         <span className="inline-flex items-center gap-2.5 min-w-0">
-          {medal.image ? (
+          {medal.locked ? (
+            <img
+              src={LOCK_IMG}
+              alt="Verrouillé"
+              className="w-9 h-9 object-contain opacity-40 grayscale shrink-0"
+            />
+          ) : medal.image ? (
             <img
               src={assetUrl(medal.image)}
               alt={medal.name}
@@ -213,7 +224,7 @@ function HomeContent() {
               🏅
             </span>
           )}
-          <span className="block truncate font-medium text-(--text-main)">
+          <span className="block font-medium text-(--text-main) lg:truncate">
             {medal.name}
           </span>
         </span>
@@ -227,7 +238,9 @@ function HomeContent() {
         medal.is_level_medal ? (
           <span className="text-xs text-(--text-muted)">N/A</span>
         ) : (
-          <span className="block truncate">{medal.points_required} pts</span>
+          <span className="block lg:truncate lg:text-xs min-[1152px]:text-sm">
+            {medal.points_required} pts
+          </span>
         ),
     },
   ];
@@ -237,7 +250,7 @@ function HomeContent() {
       field: "teacher",
       label: "Professeur",
       render: (r) => (
-        <span className="block truncate text-(--text-main)">
+        <span className="block text-(--text-main) lg:truncate">
           {r.teacher_first_name} {r.teacher_last_name}
           <span className="ml-2 text-[10px] uppercase tracking-wide text-(--text-muted)">
             {r.teacher_role === "admin" ? "Admin" : "Professeur"}
@@ -249,7 +262,7 @@ function HomeContent() {
       field: "total_points",
       label: "Points",
       render: (r) => (
-        <span className="font-semibold text-(--accent)">
+        <span className="font-semibold text-(--accent) lg:text-xs min-[1152px]:text-sm">
           {r.total_points} pts
         </span>
       ),
@@ -266,16 +279,33 @@ function HomeContent() {
         description="Tableau de bord général et suivi des classes"
       >
         {!loading && bestClass && (
-          <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-(--accent)/15 border border-(--accent)/30">
-            <span className="text-2xl leading-none" aria-hidden>
-              🏆
+          <div className="w-full sm:w-72 flex items-center justify-center sm:justify-start gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-(--accent)/25 to-transparent border border-(--accent)/40 shadow-[0_0_30px_-5px_rgba(232,78,27,0.4)]">
+            <span className="relative w-16 h-16 shrink-0 flex items-center justify-center">
+              <span
+                className="absolute inset-0 flex items-center justify-center text-4xl leading-none"
+                aria-hidden
+              >
+                🏆
+              </span>
+              <img
+                src="/trophy.webp"
+                alt="Trophée"
+                className="relative w-16 h-16 object-contain drop-shadow-[0_0_12px_rgba(232,78,27,0.6)]"
+              />
             </span>
             <div className="text-left">
-              <p className="text-sm font-bold text-(--text-main) leading-tight">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-(--accent)">
+                Classe en tête
+              </span>
+              <p className="text-xl font-black text-(--text-main) leading-tight">
                 {bestClass.name}
               </p>
+              <p className="text-sm font-semibold text-(--accent) leading-tight">
+                {bestClass.total_points || 0} pts
+              </p>
               <p className="text-[11px] text-(--text-muted) leading-tight">
-                {bestClass.total_points || 0} points gagnés !
+                {bestClass.completed_items || 0} items ·{" "}
+                {bestClass.completed_levels || 0} niveaux validés
               </p>
             </div>
           </div>
@@ -283,54 +313,9 @@ function HomeContent() {
       </PageHeader>
 
       <div className="flex flex-1 min-h-0 gap-4 flex-col min-[1152px]:flex-row">
-        {/* === Colonne gauche : stats totales === */}
-        <div className="flex flex-col gap-4 w-full min-[1152px]:w-[15%] min-w-0 shrink-0 min-[1152px]:min-h-0">
-          <div className={`${t.card} flex flex-col gap-4 min-[1152px]:flex-1 min-[1152px]:min-h-0`}>
-            <h3 className="text-lg font-bold text-(--text-main)">
-              Statistiques totales
-            </h3>
-            <div className="grid grid-cols-1 min-[480px]:grid-cols-3 min-[1152px]:grid-cols-1 min-[1152px]:grid-rows-3 gap-3">
-              <div className="p-3 bg-white/5 rounded-xl border border-(--border-color) flex flex-col items-center text-center gap-1">
-                <span className="block text-2xl font-black text-(--accent)">
-                  {loading ? (
-                    <span className="inline-block w-14 h-7 bg-white/10 animate-pulse rounded" />
-                  ) : (
-                    globalStats.totalPoints
-                  )}
-                </span>
-                <span className="text-xs text-(--text-muted)">
-                  Points remportés
-                </span>
-              </div>
-              <div className="p-3 bg-white/5 rounded-xl border border-(--border-color) flex flex-col items-center text-center gap-1">
-                <span className="block text-2xl font-black text-(--text-main)">
-                  {loading ? (
-                    <span className="inline-block w-14 h-7 bg-white/10 animate-pulse rounded" />
-                  ) : (
-                    globalStats.totalItems
-                  )}
-                </span>
-                <span className="text-xs text-(--text-muted)">Items validés</span>
-              </div>
-              <div className="p-3 bg-white/5 rounded-xl border border-(--border-color) flex flex-col items-center text-center gap-1">
-                <span className="block text-2xl font-black text-(--text-main)">
-                  {loading ? (
-                    <span className="inline-block w-14 h-7 bg-white/10 animate-pulse rounded" />
-                  ) : (
-                    globalStats.totalLevels
-                  )}
-                </span>
-                <span className="text-xs text-(--text-muted)">
-                  Niveaux validés
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* === Colonne droite (75%) : Récapitulatif par classe === */}
-        <div className={`${t.card} p-3! sm:p-6! flex flex-col min-[1152px]:flex-1 min-[1152px]:min-h-0 min-[1152px]:overflow-y-auto overflow-visible space-y-4`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
+        {/* === Colonne droite : Récapitulatif par classe === */}
+        <div className="pb-2 min-[1152px]:pb-6 flex flex-col min-[1152px]:flex-1 min-[1152px]:min-h-0 min-[1152px]:overflow-y-auto overflow-visible space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
             <h3 className="text-lg font-bold text-(--text-main)">
               Récapitulatif par classe
             </h3>
@@ -392,35 +377,6 @@ function HomeContent() {
           >
             <div className={detailCell}>
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
-                Items validés
-              </h4>
-              <div className="flex flex-col flex-1 min-h-0">
-                {loading || !classDetails ? (
-                  <SkeletonRows rows={6} className="flex-1 overflow-hidden" />
-                ) : (
-                  <ScrollableTableCard>
-                    <DataTable
-                      data={classDetails.completed_items || []}
-                      columns={itemColumns}
-                      keyExtractor={(item) => item.id}
-                      editingId={null}
-                      editForm={{}}
-                      setEditForm={noop as any}
-                      onEdit={noop}
-                      onSave={noop}
-                      onCancel={noop}
-                      onDelete={noop}
-                      hideActions
-                      emptyMessage="Aucun item validé pour le moment."
-                      wrapColsClass="grid-cols-1"
-                    />
-                  </ScrollableTableCard>
-                )}
-              </div>
-            </div>
-
-            <div className={detailCell}>
-              <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
                 Niveaux
               </h4>
               <div className="flex flex-col flex-1 min-h-0">
@@ -450,7 +406,7 @@ function HomeContent() {
 
             <div className={detailCell}>
               <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
-                Médailles débloquées
+                Items
               </h4>
               <div className="flex flex-col flex-1 min-h-0">
                 {loading || !classDetails ? (
@@ -458,7 +414,36 @@ function HomeContent() {
                 ) : (
                   <ScrollableTableCard>
                     <DataTable
-                      data={classDetails.medals || []}
+                      data={classDetails.items || []}
+                      columns={itemColumns}
+                      keyExtractor={(item) => item.id}
+                      editingId={null}
+                      editForm={{}}
+                      setEditForm={noop as any}
+                      onEdit={noop}
+                      onSave={noop}
+                      onCancel={noop}
+                      onDelete={noop}
+                      hideActions
+                      emptyMessage="Aucun item défini."
+                      wrapColsClass="grid-cols-1"
+                    />
+                  </ScrollableTableCard>
+                )}
+              </div>
+            </div>
+
+            <div className={detailCell}>
+              <h4 className="text-sm font-semibold text-(--text-muted) mb-2 shrink-0">
+                Médailles
+              </h4>
+              <div className="flex flex-col flex-1 min-h-0">
+                {loading || !classDetails ? (
+                  <SkeletonRows rows={6} className="flex-1 overflow-hidden" />
+                ) : (
+                  <ScrollableTableCard>
+                    <DataTable
+                      data={classDetails.all_medals || []}
                       columns={medalColumns}
                       keyExtractor={(medal) => medal.id}
                       editingId={null}
@@ -469,7 +454,7 @@ function HomeContent() {
                       onCancel={noop}
                       onDelete={noop}
                       hideActions
-                      emptyMessage="Aucune médaille débloquée pour le moment."
+                      emptyMessage="Aucune médaille définie."
                       wrapColsClass="grid-cols-1"
                     />
                   </ScrollableTableCard>

@@ -6,10 +6,16 @@ export const getAllClasses = async () => {
   try {
     const [rows] = await pool.query(`
       SELECT c.id, c.name,
-             u.first_name as pp_first_name, u.last_name as pp_last_name
+             u.first_name as pp_first_name, u.last_name as pp_last_name,
+             u.id as pp_user_id
       FROM classes c
-      LEFT JOIN class_users cu ON c.id = cu.class_id AND cu.is_principal = 1
-      LEFT JOIN users u ON cu.user_id = u.id
+      LEFT JOIN (
+        SELECT class_id, MIN(user_id) AS user_id
+        FROM class_users
+        WHERE is_principal = 1
+        GROUP BY class_id
+      ) pf ON pf.class_id = c.id
+      LEFT JOIN users u ON u.id = pf.user_id
     `);
     return rows;
   } catch (error: any) {
@@ -74,12 +80,18 @@ export const getPublicLeaderboard = async (trimestreId?: number) => {
       `
       SELECT c.id, c.name, 
              COALESCE(SUM(pl.points_awarded), 0) as total_points,
-             u.first_name as pp_first_name, u.last_name as pp_last_name
+             u.first_name as pp_first_name, u.last_name as pp_last_name,
+             u.id as pp_user_id
       FROM classes c
-      LEFT JOIN class_users cu ON c.id = cu.class_id AND cu.is_principal = 1
-      LEFT JOIN users u ON cu.user_id = u.id
+      LEFT JOIN (
+        SELECT class_id, MIN(user_id) AS user_id
+        FROM class_users
+        WHERE is_principal = 1
+        GROUP BY class_id
+      ) pf ON pf.class_id = c.id
+      LEFT JOIN users u ON u.id = pf.user_id
       LEFT JOIN points_log pl ON c.id = pl.class_id AND pl.trimestre_id = ?
-      GROUP BY c.id 
+      GROUP BY c.id, c.name, u.first_name, u.last_name, u.id
       ORDER BY total_points DESC
     `,
       [tid],
@@ -348,11 +360,31 @@ export const assignUserToClass = async (
   isPrincipal: boolean,
 ) => {
   try {
+    if (isPrincipal) {
+      const [existing]: any = await pool.query(
+        `SELECT class_id FROM class_users
+         WHERE user_id = ? AND is_principal = 1 AND class_id <> ?
+         LIMIT 1`,
+        [userId, classId],
+      );
+      if (existing.length > 0) {
+        throw new AppError(
+          "Ce professeur est déjà professeur principal d'une autre classe.",
+          400,
+        );
+      }
+      await pool.query(
+        `UPDATE class_users SET is_principal = 0
+         WHERE class_id = ? AND is_principal = 1 AND user_id <> ?`,
+        [classId, userId],
+      );
+    }
     await pool.query(
       "INSERT INTO class_users (class_id, user_id, is_principal) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE is_principal = VALUES(is_principal)",
       [classId, userId, isPrincipal ? 1 : 0],
     );
   } catch (error: any) {
+    if (error instanceof AppError) throw error;
     throw handleDatabaseError(error);
   }
 };

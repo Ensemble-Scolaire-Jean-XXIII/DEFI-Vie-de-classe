@@ -126,9 +126,10 @@ function LevelsPanel({
     {
       field: "name",
       label: "Nom du niveau",
+      className: "w-[55%]",
       sortable: true,
       render: (item) => (
-        <span className="block w-full truncate font-medium">{item.name}</span>
+        <span className="block w-full font-medium lg:truncate">{item.name}</span>
       ),
       renderEdit: (form, update) => (
         <input
@@ -142,6 +143,7 @@ function LevelsPanel({
     {
       field: "medal",
       label: "Médaille",
+      className: "w-24",
       render: (item) =>
         item.medal_image ? (
           <img
@@ -174,7 +176,7 @@ function LevelsPanel({
   ];
 
   return (
-    <div className="flex flex-col min-h-0 gap-3">
+    <div className="flex flex-col min-h-0 gap-3 overflow-hidden">
       <div className="shrink-0 flex justify-between items-center gap-2">
         <h2 className={`${t.title} text-xl tracking-tight drop-shadow-md`}>
           Niveaux
@@ -285,6 +287,7 @@ function LevelsPanel({
           onSearchChange={setSearchQuery}
           isLoading={crud.isLoading}
           emptyMessage="Aucun niveau trouvé."
+          centerCardContent
         />
       </ScrollableTableCard>
     </div>
@@ -369,6 +372,7 @@ function ItemsPanel({
     {
       field: "image",
       label: "Image",
+      className: "w-24",
       render: (item) =>
         item.image && typeof item.image === "string" ? (
           <img
@@ -397,7 +401,7 @@ function ItemsPanel({
       label: "Nom de l'item",
       sortable: true,
       render: (item) => (
-        <span className="block w-full truncate font-medium">{item.name}</span>
+        <span className="block w-full font-medium lg:truncate">{item.name}</span>
       ),
       renderEdit: (form, update) => (
         <input
@@ -411,9 +415,10 @@ function ItemsPanel({
     {
       field: "level",
       label: "Niveau",
+      className: "w-[45%]",
       sortable: true,
       render: (item) => (
-        <span className="block truncate">{item.level_name}</span>
+        <span className="block lg:truncate">{item.level_name}</span>
       ),
       renderEdit: (form, update) => (
         <select
@@ -434,7 +439,9 @@ function ItemsPanel({
       label: "Points requis",
       sortable: true,
       render: (item) => (
-        <span className="block truncate">{item.points_required} pts</span>
+        <span className="block lg:truncate lg:text-xs min-[1152px]:text-sm">
+          {item.points_required} pts
+        </span>
       ),
       renderEdit: (form, update) => (
         <input
@@ -449,7 +456,7 @@ function ItemsPanel({
   ];
 
   return (
-    <div className="flex flex-col min-h-0 gap-3">
+    <div className="flex flex-col min-h-0 gap-3 overflow-hidden">
       <div className="shrink-0 flex justify-between items-center gap-2">
         <h2 className={`${t.title} text-xl tracking-tight drop-shadow-md`}>
           Items
@@ -559,6 +566,7 @@ function ItemsPanel({
           onSearchChange={setSearchQuery}
           isLoading={crud.isLoading}
           emptyMessage="Aucun item trouvé."
+          centerCardContent
         />
       </ScrollableTableCard>
     </div>
@@ -590,7 +598,7 @@ function NiveauxItemsContent() {
         description="Gérez les niveaux thématiques (à gauche) et les items qui les composent (à droite)"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 auto-rows-[minmax(32rem,80vh)] desktop:grid-cols-2 desktop:grid-rows-[minmax(0,1fr)] desktop:auto-rows-auto desktop:flex-1 desktop:min-h-0 gap-4">
         <LevelsPanel medals={medals} searchParams={searchParams} />
         <ItemsPanel levels={levels} searchParams={searchParams} />
       </div>

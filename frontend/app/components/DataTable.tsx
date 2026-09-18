@@ -26,8 +26,14 @@ export default function DataTable<T>({
   emptyMessage = "Aucun résultat trouvé.",
   actionsAllowed,
   wrapColsClass = "grid-cols-1 sm:grid-cols-2",
+  cardActionsInHeader = false,
+  cardActionsInline = false,
+  centerCardContent = false,
 }: DataTableProps<T> & {
   emptyMessage?: string;
+  cardActionsInHeader?: boolean;
+  cardActionsInline?: boolean;
+  centerCardContent?: boolean;
 }) {
   const { t } = useTheme();
 
@@ -134,10 +140,10 @@ export default function DataTable<T>({
             />
           </div>
         )}
-        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse text-sm table-fixed">
+        <div className="shrink-0 overflow-hidden">
+          <table className="w-full text-left border-separate border-spacing-0 text-sm table-fixed">
             <thead>
-              <tr className="border-b border-(--border-color)">
+              <tr>
                 {columns.map((col, i) =>
                   col.sortable && onSort ? (
                     <SortHeader
@@ -152,15 +158,17 @@ export default function DataTable<T>({
                   ) : (
                     <th
                       key={i}
-                      className={`sticky top-0 z-30 px-3 py-3 font-semibold ${t.tableHeader} ${col.className || ""}`}
+                      className={`px-3 py-3 font-semibold ${t.tableHeader} ${col.className || ""}`}
                     >
-                      {col.label as string}
+                      <div className="flex items-center gap-2">
+                        <span>{col.label as string}</span>
+                      </div>
                     </th>
                   ),
                 )}
                 {hasActions && (
                   <th
-                    className={`sticky top-0 z-30 px-3 py-3 font-semibold text-right ${t.tableHeader} min-w-0`}
+                    className={`px-3 py-3 font-semibold text-right ${t.tableHeader} w-36 min-w-0`}
                   >
                     {onSearchChange ? (
                       <input
@@ -177,7 +185,11 @@ export default function DataTable<T>({
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-(--border-color)">
+          </table>
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+          <table className="w-full text-left border-separate border-spacing-0 text-sm table-fixed">
+            <tbody className="text-(--text-main)">
               {isLoading ? (
                 <TableSkeleton columns={totalColumns} rows={10} />
               ) : data.length === 0 ? (
@@ -211,7 +223,7 @@ export default function DataTable<T>({
                         </td>
                       ))}
                       {hasActions && (
-                        <td className="px-3 py-3.5 text-right">
+                        <td className="px-3 py-3.5 text-right w-36">
                           <Actions id={id} item={item} />
                         </td>
                       )}
@@ -238,25 +250,49 @@ export default function DataTable<T>({
           >
             {data.map((item) => {
               const id = keyExtractor(item);
+              const lastIndex = columns.length - 1;
               return (
-                <div key={id} className={`${t.card} p-4 h-fit`}>
-                  <dl className="space-y-3">
-                    {columns.map((col, i) => (
-                      <div key={i} className="min-w-0">
-                        <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--text-muted)">
-                          {typeof col.label === "string" ? col.label : "Champ"}
-                        </dt>
-                        <dd className="mt-0.5 text-sm leading-snug wrap-break-word">
-                          {editingId === id && col.renderEdit
-                            ? col.renderEdit(editForm, (val) =>
-                                setEditForm((prev) => ({ ...prev, ...val })),
-                              )
-                            : col.render(item)}
-                        </dd>
-                      </div>
-                    ))}
+                <div
+                  key={id}
+                  className={`${t.card} p-4 h-fit relative ${centerCardContent ? "max-sm:text-center" : ""}`}
+                >
+                  {cardActionsInHeader && hasActions && (
+                    <div className="absolute top-2 right-2">
+                      <Actions id={id} item={item} />
+                    </div>
+                  )}
+                  <dl className={`space-y-3 ${cardActionsInHeader ? "pr-10" : ""}`}>
+                    {columns.map((col, i) => {
+                      const label =
+                        typeof col.label === "string" ? col.label : "Champ";
+                      const inlineActions =
+                        cardActionsInline && hasActions && i === lastIndex;
+                      return (
+                        <div key={i} className="min-w-0">
+                          {label && (
+                            <dt className="text-[10px] font-semibold uppercase tracking-wider text-(--text-muted)">
+                              {label}
+                            </dt>
+                          )}
+                          <dd
+                            className={`mt-0.5 text-sm leading-snug wrap-break-word ${
+                              inlineActions
+                                ? "flex items-center justify-between gap-2"
+                                : ""
+                            }`}
+                          >
+                            {editingId === id && col.renderEdit
+                              ? col.renderEdit(editForm, (val) =>
+                                  setEditForm((prev) => ({ ...prev, ...val })),
+                                )
+                              : col.render(item)}
+                            {inlineActions && <Actions id={id} item={item} />}
+                          </dd>
+                        </div>
+                      );
+                    })}
                   </dl>
-                  {hasActions && (
+                  {hasActions && !cardActionsInHeader && !cardActionsInline && (
                     <div className="mt-3 pt-3 border-t border-(--border-color)">
                       <Actions id={id} item={item} />
                     </div>

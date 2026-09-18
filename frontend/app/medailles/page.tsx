@@ -261,7 +261,7 @@ function GlobalMedalsContent() {
   ];
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-4 overflow-hidden">
       <PageHeader
         title="Médailles Globales"
         description="Gérez les récompenses basées sur le score total cumulé des classes"

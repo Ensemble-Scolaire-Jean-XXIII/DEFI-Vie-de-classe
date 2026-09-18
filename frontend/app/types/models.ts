@@ -26,6 +26,7 @@ export interface ClassEntity {
   name: string;
   pp_first_name?: string;
   pp_last_name?: string;
+  pp_user_id?: string;
   total_points?: number;
   completed_items?: number;
   completed_levels?: number;

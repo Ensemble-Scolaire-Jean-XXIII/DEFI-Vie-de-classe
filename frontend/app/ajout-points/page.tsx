@@ -204,7 +204,7 @@ export default function AjoutPointsPage() {
   });
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4">
+    <div className="flex flex-col flex-1 min-h-0 gap-4 overflow-hidden">
       <PageHeader
         title="Attribuer des points"
         description="Valoriser un comportement positif (1 point max. par item et par classe sur 2 heures)"

@@ -15,7 +15,7 @@ export default function SortHeader({
 
   return (
     <th
-      className={`sticky top-0 z-20 px-3 py-3 font-semibold cursor-pointer hover:opacity-70 select-none ${t.tableHeader} ${className}`}
+      className={`px-3 py-3 font-semibold cursor-pointer hover:opacity-70 select-none ${t.tableHeader} ${className}`}
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-2">
