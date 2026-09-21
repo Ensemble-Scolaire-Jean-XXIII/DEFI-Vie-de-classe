@@ -55,6 +55,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    environment:
+      HOSTNAME: "0.0.0.0"
     depends_on:
       - backend-defi-vdc
     networks:
