@@ -4,7 +4,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { Request, Response, NextFunction } from "express";
 
-const uploadsDir = path.resolve(__dirname, "../uploads");
+const uploadsDir = path.resolve(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }

@@ -279,7 +279,7 @@ function HomeContent() {
         description="Tableau de bord général et suivi des classes"
       >
         {!loading && bestClass && (
-          <div className="w-full sm:w-72 flex items-center justify-center sm:justify-start gap-4 px-5 py-3 rounded-2xl bg-gradient-to-r from-(--accent)/25 to-transparent border border-(--accent)/40 shadow-[0_0_30px_-5px_rgba(232,78,27,0.4)]">
+          <div className="w-full sm:w-72 flex items-center justify-center sm:justify-start gap-4 px-5 py-3 rounded-2xl bg-linear-to-r from-(--accent)/25 to-transparent border border-(--accent)/40 shadow-[0_0_30px_-5px_rgba(232,78,27,0.4)]">
             <span className="relative w-16 h-16 shrink-0 flex items-center justify-center">
               <img
                 src="/trophy.webp"
@@ -307,7 +307,6 @@ function HomeContent() {
       </PageHeader>
 
       <div className="flex flex-1 min-h-0 gap-4 flex-col min-[1152px]:flex-row">
-        {/* === Colonne droite : Récapitulatif par classe === */}
         <div className="pb-2 min-[1152px]:pb-6 flex flex-col min-[1152px]:flex-1 min-[1152px]:min-h-0 min-[1152px]:overflow-y-auto overflow-visible space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0">
             <h3 className="text-lg font-bold text-(--text-main)">
