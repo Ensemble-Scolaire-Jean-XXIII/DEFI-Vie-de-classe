@@ -21,7 +21,9 @@ services:
 
   backend-defi-vdc:
     container_name: backend-defi-vdc-prod
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
     restart: unless-stopped
     environment:
       DB_HOST: db-defi-vdc-prod
