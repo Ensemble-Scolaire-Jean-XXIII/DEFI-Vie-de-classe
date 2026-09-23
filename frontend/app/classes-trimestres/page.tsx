@@ -27,6 +27,7 @@ import { useToast } from "../contexts/ToastContext";
 import { classUserService } from "../services/classUserService";
 import { userService } from "../services/userService";
 import { parseJwt } from "../lib/auth";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function useToastEffects(opts: {
   error: string;
@@ -93,6 +94,7 @@ function ClassesPanel({
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [isPhone, setIsPhone] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
@@ -142,18 +144,13 @@ function ClassesPanel({
   };
 
   const handleReset = async () => {
-    if (
-      !window.confirm(
-        "Réinitialiser toutes les classes ? Cette action supprimera tous les points attribués.",
-      )
-    ) {
-      return;
-    }
     try {
       await classService.reset();
       showToast("Toutes les classes ont été réinitialisées.", "success");
     } catch (err: any) {
       showToast(err.message || "Erreur lors de la réinitialisation", "error");
+    } finally {
+      setShowResetConfirm(false);
     }
   };
 
@@ -336,7 +333,7 @@ function ClassesPanel({
         <div className="flex items-center gap-2">
           {canManage && (
             <button
-              onClick={handleReset}
+              onClick={() => setShowResetConfirm(true)}
               className={`${t.btnGhost} p-2.5 flex items-center justify-center cursor-pointer text-amber-400 border border-amber-400/30 hover:bg-amber-400/10`}
               title="Réinitialiser toutes les classes"
             >
@@ -545,6 +542,16 @@ function ClassesPanel({
           return isPhone ? createPortal(content, document.body) : content;
         })()}
       </ScrollableTableCard>
+
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Réinitialiser toutes les classes"
+        message="Cette action supprimera tous les points attribués et les affectations de professeurs. Continuer ?"
+        confirmLabel="Réinitialiser"
+        confirmClassName="bg-amber-500 border border-amber-400/50 text-white hover:bg-amber-600"
+        onConfirm={handleReset}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }
