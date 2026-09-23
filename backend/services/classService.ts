@@ -63,6 +63,7 @@ export const deleteClass = async (id: number) => {
 export const resetAllClasses = async (): Promise<void> => {
   try {
     await pool.query("DELETE FROM points_log");
+    await pool.query("DELETE FROM class_users");
   } catch (error: any) {
     throw handleDatabaseError(error);
   }

@@ -47,67 +47,69 @@ export default function ProfilePage() {
         onSubmit={handleUpdate}
         className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 overflow-y-auto custom-scrollbar"
       >
-        <div className={`${t.card} flex flex-col gap-4`}>
+        <div className={`${t.card} flex flex-col`}>
           <h3 className="text-lg font-bold text-(--text-main)">
             Informations personnelles
           </h3>
-          <div>
-            <label className="label-text">Prénom</label>
-            {isLoading ? (
-              <Skeleton className="h-9.5 w-full" />
-            ) : (
-              <input
-                type="text"
-                className={`${t.input} opacity-70 cursor-not-allowed`}
-                value={formData.first_name}
-                disabled
-              />
-            )}
-          </div>
-          <div>
-            <label className="label-text">Nom</label>
-            {isLoading ? (
-              <Skeleton className="h-9.5 w-full" />
-            ) : (
-              <input
-                type="text"
-                className={`${t.input} opacity-70 cursor-not-allowed`}
-                value={formData.last_name}
-                disabled
-              />
-            )}
-          </div>
-          <div>
-            <label className="label-text">Email</label>
-            {isLoading ? (
-              <Skeleton className="h-9.5full" />
-            ) : (
-              <input
-                type="email"
-                className={`${t.input} opacity-70 cursor-not-allowed`}
-                value={formData.email}
-                disabled
-              />
-            )}
-          </div>
-          <div>
-            <label className="label-text">Rôle</label>
-            {isLoading ? (
-              <Skeleton className="h-9.5 w-full" />
-            ) : (
-              <input
-                type="text"
-                className={`${t.input} opacity-70 cursor-not-allowed`}
-                value={user?.role || ""}
-                disabled
-              />
-            )}
+          <div className="flex-1 flex flex-col justify-center gap-4">
+            <div>
+              <label className="label-text">Prénom</label>
+              {isLoading ? (
+                <Skeleton className="h-9.5 w-full" />
+              ) : (
+                <input
+                  type="text"
+                  className={`${t.input} opacity-70 cursor-not-allowed`}
+                  value={formData.first_name}
+                  disabled
+                />
+              )}
+            </div>
+            <div>
+              <label className="label-text">Nom</label>
+              {isLoading ? (
+                <Skeleton className="h-9.5 w-full" />
+              ) : (
+                <input
+                  type="text"
+                  className={`${t.input} opacity-70 cursor-not-allowed`}
+                  value={formData.last_name}
+                  disabled
+                />
+              )}
+            </div>
+            <div>
+              <label className="label-text">Email</label>
+              {isLoading ? (
+                <Skeleton className="h-9.5full" />
+              ) : (
+                <input
+                  type="email"
+                  className={`${t.input} opacity-70 cursor-not-allowed`}
+                  value={formData.email}
+                  disabled
+                />
+              )}
+            </div>
+            <div>
+              <label className="label-text">Rôle</label>
+              {isLoading ? (
+                <Skeleton className="h-9.5 w-full" />
+              ) : (
+                <input
+                  type="text"
+                  className={`${t.input} opacity-70 cursor-not-allowed`}
+                  value={user?.role || ""}
+                  disabled
+                />
+              )}
+            </div>
           </div>
         </div>
 
-        <div className={`${t.card} flex flex-col justify-between gap-4`}>
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-(--text-main)">Sécurité</h3>
+        <div className={`${t.card} flex flex-col gap-4`}>
+          <h3 className="text-lg font-bold text-(--text-main)">Sécurité</h3>
+          <div className="flex-1 flex flex-col justify-center space-y-4">
             <div>
               <label className="label-text">Ancien mot de passe</label>
               <input
@@ -159,33 +161,35 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-        <div className={`${t.card} shadow-sm flex flex-col gap-4`}>
-          <div>
+        <div className={`${t.card} shadow-sm flex flex-col`}>
+          <div className="flex flex-col flex-1">
             <h3 className="text-lg font-bold mb-3 text-(--text-main)">
               Apparence
             </h3>
-            <label className="label-text">Thème de l&apos;application</label>
-            <select
-              value={themeName}
-              onChange={(e) => setThemeName(e.target.value as any)}
-              className={`${t.input} cursor-pointer`}
-            >
-              <option value="shadowIslands" className="bg-slate-900 text-white">
-                Shadow Islands
-              </option>
-              <option value="glass" className="bg-slate-900 text-white">
-                Glass
-              </option>
-              <option value="institution" className="bg-slate-900 text-white">
-                Jean 23
-              </option>
-              <option value="solid" className="bg-slate-900 text-white">
-                Solid
-              </option>
-            </select>
-            <p className={`text-xs mt-2 ${t.textMuted}`}>
-              Modifie l&apos;apparence globale instantanément.
-            </p>
+            <div className="flex-1 flex flex-col justify-center">
+              <label className="label-text">Thème de l&apos;application</label>
+              <select
+                value={themeName}
+                onChange={(e) => setThemeName(e.target.value as any)}
+                className={`${t.input} cursor-pointer`}
+              >
+                <option value="shadowIslands" className="bg-slate-900 text-white">
+                  Shadow Islands
+                </option>
+                <option value="glass" className="bg-slate-900 text-white">
+                  Glass
+                </option>
+                <option value="institution" className="bg-slate-900 text-white">
+                  Jean 23
+                </option>
+                <option value="solid" className="bg-slate-900 text-white">
+                  Solid
+                </option>
+              </select>
+              <p className={`text-xs mt-2 ${t.textMuted}`}>
+                Modifie l&apos;apparence globale instantanément.
+              </p>
+            </div>
           </div>
         </div>
       </form>
