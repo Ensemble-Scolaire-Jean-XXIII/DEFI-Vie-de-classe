@@ -5,6 +5,12 @@ l'Ensemble Scolaire Jean XXIII. Elle couvre l'architecture globale, le modèle
 de données, l'authentification, la navigation, l'API backend et le système de
 thèmes, avec des diagrammes Mermaid pour illustrer les flux.
 
+> **Guide utilisateur** : le guide d'utilisation destiné aux professeurs et
+> administrateurs est disponible dans
+> [`Guide utilisateur — Défi Vie de classe.docx`](../Guide%20utilisateur%20%E2%80%94%20D%C3%A9fi%20Vie%20de%20classe.docx).
+> Sa source est [`user-guide.html`](user-guide.html), régénéré par
+> `build-user-guide.sh`.
+
 ---
 
 ## Sommaire
@@ -186,6 +192,78 @@ sequenceDiagram
 - **Chargement initial** : `LayoutWrapper` parse le JWT (`parseJwt`) → met `role`.
   Pour un `professeur`, il appelle `GET /api/users/me` pour détecter les classes
   où il est professeur principal (`is_principal`).
+
+### Cycle de vie de la session côté client
+
+`frontend/app/services/api.ts` centralise les appels authentifiés
+(`get` / `post` / `put` / `delete`) autour d'un unique `send` + `handleResponse`.
+Une réponse `401` **ne clôt pas automatiquement la session** : elle n'est traitée
+comme une fin de session que si le corps de la réponse est vide ou porte un
+message d'authentification connu (`Unauthorized`, `Invalid token`,
+`Session expirée`). Toute autre erreur `401` métier est remontée telle quelle
+à l'appelant, qui l'affiche sans supprimer le token.
+
+```mermaid
+flowchart TD
+    A[api.send] --> B{status = 204 ?}
+    B -- Oui --> Z[Retour undefined]
+    B -- Non --> C[handleResponse lit le corps JSON]
+    C --> D{status = 401 ?}
+    D -- Non --> E{res.ok ?}
+    E -- Non --> F[throw Error(message métier)]
+    E -- Oui --> G[Retour du JSON]
+    D -- Oui --> H{message = Unauthorized / Invalid token / vide ?}
+    H -- Oui --> I[localStorage.removeItem token + redirection /connexion]
+    H -- Non --> F
+```
+
+### Changement de mot de passe
+
+`PUT /api/users/me` avec `password_hash` + `old_password` appelle
+`userService.updateSelf`. Les règles sont appliquées côté backend, qui fait
+référence, et re-vérifiées côté frontend pour un retour immédiat :
+
+| Règle | Code HTTP | Message |
+| --- | --- | --- |
+| Ancien mot de passe absent | `400` | L'ancien mot de passe est requis. |
+| Ancien mot de passe incorrect | `400` | L'ancien mot de passe est incorrect. |
+| Nouveau mot de passe identique à l'ancien | `400` | Le nouveau mot de passe doit être différent de l'ancien. |
+
+L'ancien mot de passe est vérifié par `bcrypt.compare` contre le hash stocké
+avant tout hachage du nouveau. Les erreurs de saisie sont volontairement
+renvoyées en `400` et non `401` : un mot de passe mal saisi est une erreur de
+validation du formulaire, pas une défaillance d'authentification, et ne doit
+donc pas provoquer de déconnexion (cf. cycle de vie de session ci-dessus).
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur
+    participant FE as useProfile / profil
+    participant BE as PUT /api/users/me
+    participant DB as MariaDB
+
+    U->>FE: Ancien + nouveau + confirmation
+    FE->>FE: Regex complexité, confirmation, nouveau ≠ ancien
+    FE->>BE: { password_hash, old_password }
+    BE->>DB: SELECT password_hash
+    BE->>BE: bcrypt.compare(ancien, hash)
+    alt ancien incorrect
+        BE-->>FE: 400 "L'ancien mot de passe est incorrect."
+        FE->>U: Affiche l'erreur (session conservée)
+    else nouveau identique à l'ancien
+        BE-->>FE: 400 "Le nouveau mot de passe doit être différent..."
+        FE->>U: Affiche l'erreur (session conservée)
+    else valide
+        BE->>BE: bcrypt.hash(nouveau, salt)
+        BE->>DB: UPDATE users SET password_hash
+        BE-->>FE: 204
+        FE->>U: Succès + champs vidés
+    end
+```
+
+> Le champ « Ancien mot de passe » n'est `required` que lorsqu'un nouveau mot
+> de passe est saisi, afin de ne pas bloquer une soumission sans modification
+> de mot de passe.
 
 ---
 

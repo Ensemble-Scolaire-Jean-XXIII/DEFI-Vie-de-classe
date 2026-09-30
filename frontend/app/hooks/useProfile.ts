@@ -70,6 +70,10 @@ export function useProfile() {
         setError("Les mots de passe ne correspondent pas");
         return;
       }
+      if (formData.password_hash === formData.old_password) {
+        setError("Le nouveau mot de passe doit être différent de l'ancien");
+        return;
+      }
     }
 
     try {

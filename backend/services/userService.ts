@@ -196,7 +196,13 @@ export const updateSelf = async (
     }
     const valid = await bcrypt.compare(data.old_password, target.password_hash);
     if (!valid) {
-      throw new AppError("L'ancien mot de passe est incorrect.", 401);
+      throw new AppError("L'ancien mot de passe est incorrect.", 400);
+    }
+    if (data.password_hash === data.old_password) {
+      throw new AppError(
+        "Le nouveau mot de passe doit être différent de l'ancien.",
+        400,
+      );
     }
     const salt = await bcrypt.genSalt(10);
     updateData.password_hash = await bcrypt.hash(data.password_hash, salt);
