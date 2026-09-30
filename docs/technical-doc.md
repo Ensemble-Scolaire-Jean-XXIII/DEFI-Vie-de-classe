@@ -23,6 +23,7 @@ thèmes, avec des diagrammes Mermaid pour illustrer les flux.
 6. [Emails (SMTP)](#emails-smtp)
 7. [Système de thèmes](#système-de-thèmes)
 8. [Attribution de points](#attribution-de-points)
+9. [Dépendances et sécurité](#dépendances-et-sécurité)
 
 ---
 
@@ -465,3 +466,66 @@ sequenceDiagram
   (`points_required`), soit, si `is_level_medal = 1`, par la validation d'un niveau.
 - À la clôture d'un trimestre, `POST /api/trimestres/:id/archive` fige les
   résultats dans `class_archives`.
+
+---
+
+## Dépendances et sécurité
+
+### Politique de mise à jour
+
+- Les dépendances directes sont mises à jour **par patch uniquement**
+  (`x.y.z` → `x.y.(z+1)`), sauf correctif de sécurité déjà publié dans la
+  branche de version supérieure.
+- `next` et `eslint-config-next` sont épinglés en version exacte ; toutes les
+  autres dépendances directes utilisent un `^`.
+- Les mises à jour transitives de sécurité (`npm audit`, alertes Dependabot)
+  sont traitées par lockfile : la version déclarée dans `package.json` est
+  rarement modifiée.
+
+### Règle critique : ne jamais régénérer un lockfile avec npm 10
+
+Les images de production tournent sur Alpine (musl) et s'appuient sur les
+métadonnées **`libc`** présentes dans `frontend/package-lock.json`
+(38 entrées). Un `npm install --package-lock-only` effectué avec npm 10
+(≤ 10.9.x) **supprime silencieusement ces 38 champs**, ce qui produit un
+lockfile qui s'installe en local mais casse la résolution musl en production.
+
+Procédure validée pour toute mise à jour de lockfile :
+
+1. régénérer dans un conteneur `node:24` (npm 11) monté en lecture-écriture,
+   lancé avec l'UID de l'utilisateur pour ne pas créer de fichiers root :
+
+   ```bash
+   docker run --rm --user "$(id -u):$(id -g)" \
+     -v "$PWD":/w -w /w node:24 \
+     npm install --package-lock-only --no-audit --no-fund
+   ```
+
+2. vérifier que le champ `libc` est conservé :
+
+   ```bash
+   node -p 'Object.keys(require("./package-lock.json").packages)
+     .filter(k => require("./package-lock.json").packages[k].libc).length'
+   ```
+
+3. `npm install --package-lock-only` et `npm update` sont **idempotents** sur un
+   lockfile existant : ils ne re-valident pas les plages transitives. Pour
+   corriger une incohérence, il faut **retirer l'entrée fautive du lockfile**
+   puis régénérer, afin que npm la re-résolve depuis le registre.
+4. `npm ls` doit rester sans marqueur `invalid`, et `npm audit` à 0 vulnérabilité.
+
+### Versions sensibles suivies
+
+| Paquet | Rôle | Contrainte |
+| --- | --- | --- |
+| `ip-address` | via `express-rate-limit`, présent en production | `>= 10.7.2` |
+| `baseline-browser-mapping` | données browserslist/Next | `>= 2.11.26` |
+| `brace-expansion` | outillage de dev uniquement | `>= 5.0.12` / `>= 1.1.21` |
+| `browserslist` | données de navigateurs | `>= 4.29.3` |
+| `qs` | parsing de query string | `>= 6.16.0` |
+
+Un bump manuel de `browserslist` sans ses paquets de données
+(`caniuse-lite`, `node-releases`, `electron-to-chromium`,
+`update-browserslist-db`, `baseline-browser-mapping`) laisse un lockfile
+incohérent : `npm ci` l'installe quand même, et les images Docker
+(`npm ci`) embarquent alors la version vulnérable.
