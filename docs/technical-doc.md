@@ -5,6 +5,12 @@ l'Ensemble Scolaire Jean XXIII. Elle couvre l'architecture globale, le modèle
 de données, l'authentification, la navigation, l'API backend et le système de
 thèmes, avec des diagrammes Mermaid pour illustrer les flux.
 
+> **Guide utilisateur** : le guide d'utilisation destiné aux professeurs et
+> administrateurs est disponible dans
+> [`Guide utilisateur — Défi Vie de classe.docx`](../Guide%20utilisateur%20%E2%80%94%20D%C3%A9fi%20Vie%20de%20classe.docx).
+> Sa source est [`user-guide.html`](user-guide.html), régénéré par
+> `build-user-guide.sh`.
+
 ---
 
 ## Sommaire
@@ -17,6 +23,7 @@ thèmes, avec des diagrammes Mermaid pour illustrer les flux.
 6. [Emails (SMTP)](#emails-smtp)
 7. [Système de thèmes](#système-de-thèmes)
 8. [Attribution de points](#attribution-de-points)
+9. [Dépendances et sécurité](#dépendances-et-sécurité)
 
 ---
 
@@ -186,6 +193,78 @@ sequenceDiagram
 - **Chargement initial** : `LayoutWrapper` parse le JWT (`parseJwt`) → met `role`.
   Pour un `professeur`, il appelle `GET /api/users/me` pour détecter les classes
   où il est professeur principal (`is_principal`).
+
+### Cycle de vie de la session côté client
+
+`frontend/app/services/api.ts` centralise les appels authentifiés
+(`get` / `post` / `put` / `delete`) autour d'un unique `send` + `handleResponse`.
+Une réponse `401` **ne clôt pas automatiquement la session** : elle n'est traitée
+comme une fin de session que si le corps de la réponse est vide ou porte un
+message d'authentification connu (`Unauthorized`, `Invalid token`,
+`Session expirée`). Toute autre erreur `401` métier est remontée telle quelle
+à l'appelant, qui l'affiche sans supprimer le token.
+
+```mermaid
+flowchart TD
+    A[api.send] --> B{status = 204 ?}
+    B -- Oui --> Z[Retour undefined]
+    B -- Non --> C[handleResponse lit le corps JSON]
+    C --> D{status = 401 ?}
+    D -- Non --> E{res.ok ?}
+    E -- Non --> F[throw Error(message métier)]
+    E -- Oui --> G[Retour du JSON]
+    D -- Oui --> H{message = Unauthorized / Invalid token / vide ?}
+    H -- Oui --> I[localStorage.removeItem token + redirection /connexion]
+    H -- Non --> F
+```
+
+### Changement de mot de passe
+
+`PUT /api/users/me` avec `password_hash` + `old_password` appelle
+`userService.updateSelf`. Les règles sont appliquées côté backend, qui fait
+référence, et re-vérifiées côté frontend pour un retour immédiat :
+
+| Règle | Code HTTP | Message |
+| --- | --- | --- |
+| Ancien mot de passe absent | `400` | L'ancien mot de passe est requis. |
+| Ancien mot de passe incorrect | `400` | L'ancien mot de passe est incorrect. |
+| Nouveau mot de passe identique à l'ancien | `400` | Le nouveau mot de passe doit être différent de l'ancien. |
+
+L'ancien mot de passe est vérifié par `bcrypt.compare` contre le hash stocké
+avant tout hachage du nouveau. Les erreurs de saisie sont volontairement
+renvoyées en `400` et non `401` : un mot de passe mal saisi est une erreur de
+validation du formulaire, pas une défaillance d'authentification, et ne doit
+donc pas provoquer de déconnexion (cf. cycle de vie de session ci-dessus).
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur
+    participant FE as useProfile / profil
+    participant BE as PUT /api/users/me
+    participant DB as MariaDB
+
+    U->>FE: Ancien + nouveau + confirmation
+    FE->>FE: Regex complexité, confirmation, nouveau ≠ ancien
+    FE->>BE: { password_hash, old_password }
+    BE->>DB: SELECT password_hash
+    BE->>BE: bcrypt.compare(ancien, hash)
+    alt ancien incorrect
+        BE-->>FE: 400 "L'ancien mot de passe est incorrect."
+        FE->>U: Affiche l'erreur (session conservée)
+    else nouveau identique à l'ancien
+        BE-->>FE: 400 "Le nouveau mot de passe doit être différent..."
+        FE->>U: Affiche l'erreur (session conservée)
+    else valide
+        BE->>BE: bcrypt.hash(nouveau, salt)
+        BE->>DB: UPDATE users SET password_hash
+        BE-->>FE: 204
+        FE->>U: Succès + champs vidés
+    end
+```
+
+> Le champ « Ancien mot de passe » n'est `required` que lorsqu'un nouveau mot
+> de passe est saisi, afin de ne pas bloquer une soumission sans modification
+> de mot de passe.
 
 ---
 
@@ -387,3 +466,66 @@ sequenceDiagram
   (`points_required`), soit, si `is_level_medal = 1`, par la validation d'un niveau.
 - À la clôture d'un trimestre, `POST /api/trimestres/:id/archive` fige les
   résultats dans `class_archives`.
+
+---
+
+## Dépendances et sécurité
+
+### Politique de mise à jour
+
+- Les dépendances directes sont mises à jour **par patch uniquement**
+  (`x.y.z` → `x.y.(z+1)`), sauf correctif de sécurité déjà publié dans la
+  branche de version supérieure.
+- `next` et `eslint-config-next` sont épinglés en version exacte ; toutes les
+  autres dépendances directes utilisent un `^`.
+- Les mises à jour transitives de sécurité (`npm audit`, alertes Dependabot)
+  sont traitées par lockfile : la version déclarée dans `package.json` est
+  rarement modifiée.
+
+### Règle critique : ne jamais régénérer un lockfile avec npm 10
+
+Les images de production tournent sur Alpine (musl) et s'appuient sur les
+métadonnées **`libc`** présentes dans `frontend/package-lock.json`
+(38 entrées). Un `npm install --package-lock-only` effectué avec npm 10
+(≤ 10.9.x) **supprime silencieusement ces 38 champs**, ce qui produit un
+lockfile qui s'installe en local mais casse la résolution musl en production.
+
+Procédure validée pour toute mise à jour de lockfile :
+
+1. régénérer dans un conteneur `node:24` (npm 11) monté en lecture-écriture,
+   lancé avec l'UID de l'utilisateur pour ne pas créer de fichiers root :
+
+   ```bash
+   docker run --rm --user "$(id -u):$(id -g)" \
+     -v "$PWD":/w -w /w node:24 \
+     npm install --package-lock-only --no-audit --no-fund
+   ```
+
+2. vérifier que le champ `libc` est conservé :
+
+   ```bash
+   node -p 'Object.keys(require("./package-lock.json").packages)
+     .filter(k => require("./package-lock.json").packages[k].libc).length'
+   ```
+
+3. `npm install --package-lock-only` et `npm update` sont **idempotents** sur un
+   lockfile existant : ils ne re-valident pas les plages transitives. Pour
+   corriger une incohérence, il faut **retirer l'entrée fautive du lockfile**
+   puis régénérer, afin que npm la re-résolve depuis le registre.
+4. `npm ls` doit rester sans marqueur `invalid`, et `npm audit` à 0 vulnérabilité.
+
+### Versions sensibles suivies
+
+| Paquet | Rôle | Contrainte |
+| --- | --- | --- |
+| `ip-address` | via `express-rate-limit`, présent en production | `>= 10.7.2` |
+| `baseline-browser-mapping` | données browserslist/Next | `>= 2.11.26` |
+| `brace-expansion` | outillage de dev uniquement | `>= 5.0.12` / `>= 1.1.21` |
+| `browserslist` | données de navigateurs | `>= 4.29.3` |
+| `qs` | parsing de query string | `>= 6.16.0` |
+
+Un bump manuel de `browserslist` sans ses paquets de données
+(`caniuse-lite`, `node-releases`, `electron-to-chromium`,
+`update-browserslist-db`, `baseline-browser-mapping`) laisse un lockfile
+incohérent : `npm ci` l'installe quand même, et les images Docker
+(`npm ci`) embarquent alors la version vulnérable.

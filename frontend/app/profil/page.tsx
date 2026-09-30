@@ -122,7 +122,7 @@ export default function ProfilePage() {
                     old_password: e.target.value,
                   } as any)
                 }
-                required
+                required={!!formData.password_hash}
               />
             </div>
             <div>
