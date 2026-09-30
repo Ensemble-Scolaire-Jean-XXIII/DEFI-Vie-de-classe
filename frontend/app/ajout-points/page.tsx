@@ -45,7 +45,7 @@ export default function AjoutPointsPage() {
   const [trimestres, setTrimestres] = useState<Trimestre[]>([]);
   const [myPoints, setMyPoints] = useState<MyPoint[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [formData, setFormData] = useState<AddPointPayload>({
     class_id: 0,
     item_id: 0,
